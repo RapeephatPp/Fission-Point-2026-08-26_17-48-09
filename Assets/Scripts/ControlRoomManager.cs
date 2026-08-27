@@ -244,7 +244,7 @@ public class ControlRoomManager : MonoBehaviour
         else if (IsInsideZone(cursorX, redZone))
         {
             TriggerRespawn(redZone, initialRedWidth, greenZone, false, false); 
-            /*EnterMinigame(); */
+            EnterMinigame(); 
         }
         else
         {
@@ -257,7 +257,7 @@ public class ControlRoomManager : MonoBehaviour
     }
 
     // --- ระบบเรียกและปิด Minigame ---
-    /*private void EnterMinigame()
+    private void EnterMinigame()
     {
         isGameActive = false; // ระงับเกมเพลย์หลักชั่วคราว
         
@@ -295,7 +295,7 @@ public class ControlRoomManager : MonoBehaviour
             isGameActive = true; // กลับมาเล่นเกมหลักต่อ
         }
     }
-    */
+    
 
     private void CheckGameOver()
     {
