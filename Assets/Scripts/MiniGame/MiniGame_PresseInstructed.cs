@@ -11,21 +11,29 @@ public class MiniGame_PresseInstructed : MonoBehaviour
     public TextMeshProUGUI timerText;
     public Image timerBar;
 
-    [Header("UI Visuals")]
-    public RectTransform buttonVisual; // ลาก UI รูปปุ่มบนหน้าจอมาใส่ช่องนี้
-    public float pressedScale = 0.9f;  // ขนาดตอนที่ปุ่มถูกกด (0.9 คือยุบลง 10%)
-    public float pressDuration = 0.1f; // ระยะเวลาที่ปุ่มยุบลง (วินาที)
+    [Header("UI Visuals & Juice")]
+    public RectTransform buttonVisual; 
+    public float pressedScale = 0.85f;
+    public float pressDuration = 0.15f; 
+    public Color successColor = Color.green;
+    public Color failColor = Color.red;
+
+    private Image buttonImage; 
+    private Color originalButtonColor;
 
     [Header("Minigame Settings")]
     public int minRounds = 1;                 
     public int maxRounds = 5;                 
     public int minPresses = 1;                
     public int maxPresses = 9;                
-    public float timePerRound ;           // เวลาให้กดในแต่ละรอบ (วินาที)
-    public float delayBetweenRounds = 2f;     // เวลาพักก่อนเริ่มรอบต่อไป
+    public float timePerRound;           
+    public float delayBetweenRounds = 0.5f;
 
     [Range(0f, 1f)]
     public float sameAsLastChance = 0.3f;     
+
+    [Header("Fast Check Settings")]
+    public float autoSubmitDelay = 0.5f;
 
     private int totalRounds;
     private int currentRound;
@@ -34,6 +42,7 @@ public class MiniGame_PresseInstructed : MonoBehaviour
     private int previousTargetPresses;
 
     private float timer;
+    private float timeSinceLastPress;
     private bool isRoundActive = false;
 
     private Vector3 originalButtonScale;
@@ -41,34 +50,34 @@ public class MiniGame_PresseInstructed : MonoBehaviour
 
     private void Awake()
     {
-        // เก็บขนาดดั้งเดิมของปุ่มไว้ตั้งแต่เริ่ม
         if (buttonVisual != null)
         {
             originalButtonScale = buttonVisual.localScale;
+
+            buttonImage = buttonVisual.GetComponent<Image>();
+            if (buttonImage != null) originalButtonColor = buttonImage.color;
         }
     }
 
     private void OnEnable()
     {
-        // เผื่อเปิดมินิเกมมาแล้วปุ่มค้างสถานะยุบ ให้รีเซ็ตกลับเป็นปกติ
         if (buttonVisual != null)
         {
             buttonVisual.localScale = originalButtonScale;
+            if (buttonImage != null) buttonImage.color = originalButtonColor;
         }
         StartMinigame();
     }
 
-    
     public void StartMinigame()
     {
         int day = gameManager.currentDay;
-        // สุ่มจำนวนรอบทั้งหมดที่จะต้องเล่นในครั้งนี้
+
         if (day == 1)
         {
             totalRounds = 1;
             currentRound = 1;
             previousTargetPresses = 0;
-
             timePerRound = 10f;
         }
         else if (day >= 2 && day <= 5)
@@ -91,15 +100,13 @@ public class MiniGame_PresseInstructed : MonoBehaviour
 
     private void StartRound()
     {
-        currentPresses = 0; // รีเซ็ตจำนวนที่ผู้เล่นกด
+        currentPresses = 0;
         timer = timePerRound;
+        timeSinceLastPress = 0f;
 
-        if (timerBar != null)
-        {
-            timerBar.fillAmount = 1f;
-        }
+        if (timerBar != null) timerBar.fillAmount = 1f;
+        if (buttonImage != null) buttonImage.color = originalButtonColor;
 
-        // เช็กว่าถ้ารอบนี้เป็นรอบที่ 2 ขึ้นไป และสุ่มติดโอกาสที่ตั้งไว้
         if (currentRound > 1 && Random.value <= sameAsLastChance)
         {
             targetPresses = previousTargetPresses;
@@ -107,7 +114,6 @@ public class MiniGame_PresseInstructed : MonoBehaviour
         }
         else
         {
-            // สุ่มจำนวนครั้งปกติ
             targetPresses = Random.Range(minPresses, maxPresses + 1);
             instructionText.text = "Press " + targetPresses + " Times..";
         }
@@ -119,33 +125,39 @@ public class MiniGame_PresseInstructed : MonoBehaviour
     {
         if (!isRoundActive) return;
 
-        // นับเวลาถอยหลัง
         timer -= Time.deltaTime;
-
-        // อัปเดต UI หน้าจอให้เห็นเวลา (ปัดเศษขึ้น)
         timerText.text = Mathf.Ceil(timer).ToString() + "s";
 
-        if (timerBar != null)
+        if (timerBar != null) timerBar.fillAmount = timer / timePerRound;
+
+        if (currentPresses > 0)
         {
-            // คำนวณสัดส่วนเวลา (จะได้ค่าระหว่าง 0 ถึง 1)
-            timerBar.fillAmount = timer / timePerRound;
+            timeSinceLastPress += Time.deltaTime;
         }
 
-        // รับค่าการกดปุ่มของผู้เล่น (คลิกซ้าย หรือ สเปซบาร์)
         if (Input.GetKeyDown(KeyCode.Space) || Input.GetMouseButtonDown(0))
         {
             currentPresses++;
-            // เล่นเอฟเฟกต์ปุ่มถูกกด
+            timeSinceLastPress = 0f;
+
             if (buttonVisual != null)
             {
-                // ถ้ากดรัวๆ ให้หยุดแอนิเมชันเดิมก่อนเริ่มใหม่ เพื่อไม่ให้บั๊ก
                 if (pressCoroutine != null) StopCoroutine(pressCoroutine);
                 pressCoroutine = StartCoroutine(AnimateButtonPress());
             }
 
+            if (currentPresses > targetPresses)
+            {
+                CheckRoundResult();
+                return;
+            }
         }
 
-        // เมื่อหมดเวลา
+        if (currentPresses == targetPresses && timeSinceLastPress > autoSubmitDelay)
+        {
+            CheckRoundResult();
+        }
+
         if (timer <= 0)
         {
             CheckRoundResult();
@@ -154,65 +166,70 @@ public class MiniGame_PresseInstructed : MonoBehaviour
 
     private IEnumerator AnimateButtonPress()
     {
-        // ย่อขนาดปุ่มลง
-        buttonVisual.localScale = originalButtonScale * pressedScale;
+        buttonVisual.localScale = originalButtonScale * pressedScale; 
 
-        // รอเวลาตามที่ตั้งไว้
-        yield return new WaitForSeconds(pressDuration);
+        float elapsed = 0f;
+        while (elapsed < pressDuration)
+        {
+            elapsed += Time.deltaTime;
+            buttonVisual.localScale = Vector3.Lerp(originalButtonScale * pressedScale, originalButtonScale, elapsed / pressDuration);
+            yield return null;
+        }
 
-        // คืนขนาดปุ่มกลับเป็นปกติ
-        buttonVisual.localScale = originalButtonScale;
+        buttonVisual.localScale = originalButtonScale; 
     }
+
     private void CheckRoundResult()
     {
         isRoundActive = false;
         timerText.text = "0s";
         if (timerBar != null) timerBar.fillAmount = 0f;
 
-        // ตรวจสอบว่าจำนวนที่กด ตรงกับที่สั่งหรือไม่
         if (currentPresses == targetPresses)
         {
-            // หากผ่าน
+            if (buttonImage != null) buttonImage.color = successColor;
+
             if (currentRound >= totalRounds)
             {
-                
                 instructionText.text = "Pass";
                 StartCoroutine(EndMinigameRoutine(true));
             }
             else
             {
-                
                 instructionText.text = "....";
-                previousTargetPresses = targetPresses; 
+                previousTargetPresses = targetPresses;
                 currentRound++;
                 StartCoroutine(WaitAndStartNextRound());
             }
         }
         else
         {
-            // หากพลาด (กดขาด หรือ กดเกิน)
-            instructionText.text = "Fail you press " + currentPresses + " Time ";
-            StartCoroutine(EndMinigameRoutine(false));
+            if (buttonImage != null) buttonImage.color = failColor;
+
+            if (currentPresses > targetPresses)
+                instructionText.text = "OVERLOAD! You pressed " + currentPresses + " / " + targetPresses;
+            else
+                instructionText.text = "FAIL! You pressed " + currentPresses + " / " + targetPresses;
+
+            StartCoroutine(EndMinigameRoutine(false)); 
         }
     }
 
-    
     private IEnumerator WaitAndStartNextRound()
     {
-        yield return new WaitForSeconds(delayBetweenRounds);
-        StartRound();
+        yield return new WaitForSeconds(delayBetweenRounds); 
+        StartRound(); 
     }
 
-    // ดีเลย์เล็กน้อยให้ผู้เล่นเห็นผลลัพธ์ ก่อนปิดมินิเกมแล้วส่งค่ากลับไปที่ ControlRoomManager
     private IEnumerator EndMinigameRoutine(bool isSuccess)
     {
-        yield return new WaitForSeconds(1.5f);
+        yield return new WaitForSeconds(0.8f);
 
         if (gameManager != null)
         {
             gameManager.FinishMinigame(isSuccess);
         }
 
-        gameObject.SetActive(false); // ปิดหน้าต่างมินิเกม
+        gameObject.SetActive(false);
     }
 }

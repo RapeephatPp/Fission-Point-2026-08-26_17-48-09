@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: 8ba6b49730e52aa408eaf3ad4122cad4
+guid: b84c8d337e68d0a44b24ee31b4b30aa1
 ScriptedImporter:
   internalIDToNameTable: []
   externalObjects: {}
@@ -101,7 +101,7 @@ ScriptedImporter:
     addShadowCasters: 0
     generateIndividualEvents: 1
     generateSpriteAtlas: 1
-  platformSettingsDirtyTick: 639234633701209333
+  platformSettingsDirtyTick: 639235516177736210
   singleSpriteImportData:
   - name: 
     originalName: 
@@ -125,9 +125,9 @@ ScriptedImporter:
     tessellationDetail: 0
     uvTransform: {x: 0, y: 0}
   animatedSpriteImportData:
-  - name: ControlRoom
+  - name: Minigame Sprites
     originalName: 
-    pivot: {x: 0.5, y: 0}
+    pivot: {x: 1.5192308, y: -0.37113404}
     alignment: 9
     border: {x: 0, y: 0, z: 0, w: 0}
     customData: 
@@ -135,9 +135,9 @@ ScriptedImporter:
       serializedVersion: 2
       x: 4
       y: 4
-      width: 480
-      height: 270
-    spriteID: 396c4c6d04cd752458a12501cdb47eaf
+      width: 156
+      height: 194
+    spriteID: ec56b45789138b946854462987618ecd
     spriteBone: []
     spriteOutline: []
     vertices: []
@@ -146,71 +146,8 @@ ScriptedImporter:
     edges: []
     tessellationDetail: 0
     uvTransform: {x: 4, y: 4}
-  - name: Frame_1
-    originalName: 
-    pivot: {x: 0.5, y: 0}
-    alignment: 9
-    border: {x: 0, y: 0, z: 0, w: 0}
-    customData: 
-    rect:
-      serializedVersion: 2
-      x: 4
-      y: 282
-      width: 480
-      height: 270
-    spriteID: 8c3070335b15861458f6f151b35dac83
-    spriteBone: []
-    spriteOutline: []
-    vertices: []
-    spritePhysicsOutline: []
-    indices: 
-    edges: []
-    tessellationDetail: 0
-    uvTransform: {x: 4, y: 282}
-  - name: Frame_2
-    originalName: 
-    pivot: {x: 0.5, y: -12.000001}
-    alignment: 9
-    border: {x: 0, y: 0, z: 0, w: 0}
-    customData: 
-    rect:
-      serializedVersion: 2
-      x: 4
-      y: 560
-      width: 416
-      height: 6
-    spriteID: cc1579eafefaf8d4aa446f44ad9ea04d
-    spriteBone: []
-    spriteOutline: []
-    vertices: []
-    spritePhysicsOutline: []
-    indices: 
-    edges: []
-    tessellationDetail: 0
-    uvTransform: {x: 4, y: 560}
-  - name: Frame_5
-    originalName: 
-    pivot: {x: 8.666668, y: -4.857143}
-    alignment: 9
-    border: {x: 0, y: 0, z: 0, w: 0}
-    customData: 
-    rect:
-      serializedVersion: 2
-      x: 492
-      y: 4
-      width: 3
-      height: 14
-    spriteID: 79e84e8e1485f3c4793f011cda0c7645
-    spriteBone: []
-    spriteOutline: []
-    vertices: []
-    spritePhysicsOutline: []
-    indices: 
-    edges: []
-    tessellationDetail: 0
-    uvTransform: {x: 492, y: 4}
   spriteSheetImportData:
-  - name: ControlRoom_0
+  - name: Minigame Sprites_4
     originalName: 
     pivot: {x: 0.5, y: 0.5}
     alignment: 0
@@ -218,11 +155,11 @@ ScriptedImporter:
     customData: 
     rect:
       serializedVersion: 2
-      x: 428
-      y: 1007
-      width: 32
-      height: 10
-    spriteID: 38b491588f9f1644cb0a08fa21713afc
+      x: 15
+      y: 160
+      width: 35
+      height: 27
+    spriteID: 82769f2f2de3fac45bb2e5a5441f5637
     spriteBone: []
     spriteOutline: []
     vertices: []
@@ -231,7 +168,7 @@ ScriptedImporter:
     edges: []
     tessellationDetail: 0
     uvTransform: {x: 0, y: 0}
-  - name: ControlRoom_1
+  - name: Minigame Sprites_5
     originalName: 
     pivot: {x: 0.5, y: 0.5}
     alignment: 0
@@ -239,11 +176,11 @@ ScriptedImporter:
     customData: 
     rect:
       serializedVersion: 2
-      x: 468
-      y: 1007
-      width: 32
-      height: 10
-    spriteID: 6f8b77bdc0ae5b44bac09f024dcbb6a5
+      x: 52
+      y: 160
+      width: 35
+      height: 27
+    spriteID: 66f7220d7ce2b8d47886317beb6e9220
     spriteBone: []
     spriteOutline: []
     vertices: []
@@ -252,7 +189,7 @@ ScriptedImporter:
     edges: []
     tessellationDetail: 0
     uvTransform: {x: 0, y: 0}
-  - name: ControlRoom_2
+  - name: Minigame Sprites_6
     originalName: 
     pivot: {x: 0.5, y: 0.5}
     alignment: 0
@@ -260,11 +197,11 @@ ScriptedImporter:
     customData: 
     rect:
       serializedVersion: 2
-      x: 4
-      y: 1007
-      width: 416
-      height: 6
-    spriteID: 1ecc17bb97c286245802046a3afb6046
+      x: 92
+      y: 162
+      width: 31
+      height: 23
+    spriteID: 3bee95e2187d9714d9212782943ad248
     spriteBone: []
     spriteOutline: []
     vertices: []
@@ -273,7 +210,7 @@ ScriptedImporter:
     edges: []
     tessellationDetail: 0
     uvTransform: {x: 0, y: 0}
-  - name: ControlRoom_3
+  - name: Minigame Sprites_7
     originalName: 
     pivot: {x: 0.5, y: 0.5}
     alignment: 0
@@ -281,11 +218,11 @@ ScriptedImporter:
     customData: 
     rect:
       serializedVersion: 2
-      x: 4
-      y: 282
-      width: 480
-      height: 270
-    spriteID: a0164aa91121e0d44900fc4306b6e460
+      x: 129
+      y: 162
+      width: 31
+      height: 23
+    spriteID: d31eec25ff15a404fb75ed3ac79d6b1e
     spriteBone: []
     spriteOutline: []
     vertices: []
@@ -294,7 +231,7 @@ ScriptedImporter:
     edges: []
     tessellationDetail: 0
     uvTransform: {x: 0, y: 0}
-  - name: ControlRoom_5
+  - name: Minigame Sprites_15
     originalName: 
     pivot: {x: 0.5, y: 0.5}
     alignment: 0
@@ -302,11 +239,32 @@ ScriptedImporter:
     customData: 
     rect:
       serializedVersion: 2
-      x: 429
-      y: 838
+      x: 17
+      y: 4
+      width: 44
+      height: 134
+    spriteID: 221af7cf6b7e0ed449f19a2892c38f08
+    spriteBone: []
+    spriteOutline: []
+    vertices: []
+    spritePhysicsOutline: []
+    indices: 
+    edges: []
+    tessellationDetail: 0
+    uvTransform: {x: 0, y: 0}
+  - name: Minigame Sprites_16
+    originalName: 
+    pivot: {x: 0.5, y: 0.5}
+    alignment: 0
+    border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
+    rect:
+      serializedVersion: 2
+      x: 69
+      y: 112
       width: 5
-      height: 20
-    spriteID: d23a1f957c3570c469ed1f9314271452
+      height: 22
+    spriteID: 5d22ac8a038d3c2429cea14cf14048b2
     spriteBone: []
     spriteOutline: []
     vertices: []
@@ -315,7 +273,7 @@ ScriptedImporter:
     edges: []
     tessellationDetail: 0
     uvTransform: {x: 0, y: 0}
-  - name: ControlRoom_6
+  - name: Minigame Sprites_17
     originalName: 
     pivot: {x: 0.5, y: 0.5}
     alignment: 0
@@ -323,11 +281,11 @@ ScriptedImporter:
     customData: 
     rect:
       serializedVersion: 2
-      x: 4
-      y: 838
-      width: 417
-      height: 161
-    spriteID: 204917fb82e2f0d489a56b1ed357af80
+      x: 5
+      y: 9
+      width: 9
+      height: 119
+    spriteID: b11fadb8afaf9474aace84497fde516f
     spriteBone: []
     spriteOutline: []
     vertices: []
@@ -336,7 +294,7 @@ ScriptedImporter:
     edges: []
     tessellationDetail: 0
     uvTransform: {x: 0, y: 0}
-  - name: ControlRoom_7
+  - name: Minigame Sprites_0
     originalName: 
     pivot: {x: 0.5, y: 0.5}
     alignment: 0
@@ -344,11 +302,11 @@ ScriptedImporter:
     customData: 
     rect:
       serializedVersion: 2
-      x: 4
-      y: 560
-      width: 480
-      height: 270
-    spriteID: 9304400790d59084187c3f46f6a99935
+      x: 81
+      y: 10
+      width: 112
+      height: 112
+    spriteID: 06b0851c67dd1bb4cbb46942ef196745
     spriteBone: []
     spriteOutline: []
     vertices: []
@@ -357,20 +315,19 @@ ScriptedImporter:
     edges: []
     tessellationDetail: 0
     uvTransform: {x: 0, y: 0}
-  tileSetImportData:
-  - name: Frame_0
+  - name: Minigame Sprites_1
     originalName: 
     pivot: {x: 0.5, y: 0.5}
-    alignment: 9
+    alignment: 0
     border: {x: 0, y: 0, z: 0, w: 0}
     customData: 
     rect:
       serializedVersion: 2
-      x: 4
-      y: 4
-      width: 480
-      height: 270
-    spriteID: 2b0c44a1deabedd48a951c827f6b43b3
+      x: 210
+      y: 11
+      width: 94
+      height: 95
+    spriteID: 6c0e3015e2a386142872ade672316c06
     spriteBone: []
     spriteOutline: []
     vertices: []
@@ -378,197 +335,30 @@ ScriptedImporter:
     indices: 
     edges: []
     tessellationDetail: 0
-    uvTransform: {x: 4, y: 4}
-  - name: Frame_1
-    originalName: 
-    pivot: {x: 0.5, y: 0.5}
-    alignment: 9
-    border: {x: 0, y: 0, z: 0, w: 0}
-    customData: 
-    rect:
-      serializedVersion: 2
-      x: 4
-      y: 282
-      width: 480
-      height: 270
-    spriteID: 16419cd3386e6f047900958ff2827a1d
-    spriteBone: []
-    spriteOutline: []
-    vertices: []
-    spritePhysicsOutline: []
-    indices: 
-    edges: []
-    tessellationDetail: 0
-    uvTransform: {x: 4, y: 282}
-  - name: Frame_0
-    originalName: 
-    pivot: {x: 0.5769231, y: 22.5}
-    alignment: 9
-    border: {x: 0, y: 0, z: 0, w: 0}
-    customData: 
-    rect:
-      serializedVersion: 2
-      x: 4
-      y: 560
-      width: 416
-      height: 6
-    spriteID: be537023a7b56904ea5e69cc22164a37
-    spriteBone: []
-    spriteOutline: []
-    vertices: []
-    spritePhysicsOutline: []
-    indices: 
-    edges: []
-    tessellationDetail: 0
-    uvTransform: {x: 4, y: 560}
-  - name: Frame_2
-    originalName: 
-    pivot: {x: 0.5769231, y: 22.5}
-    alignment: 9
-    border: {x: 0, y: 0, z: 0, w: 0}
-    customData: 
-    rect:
-      serializedVersion: 2
-      x: 4
-      y: 574
-      width: 416
-      height: 6
-    spriteID: c753f24ef6c6abd46b5f230f8977ebf4
-    spriteBone: []
-    spriteOutline: []
-    vertices: []
-    spritePhysicsOutline: []
-    indices: 
-    edges: []
-    tessellationDetail: 0
-    uvTransform: {x: 4, y: 574}
-  - name: Frame_0
-    originalName: 
-    pivot: {x: 80, y: 9.642858}
-    alignment: 9
-    border: {x: 0, y: 0, z: 0, w: 0}
-    customData: 
-    rect:
-      serializedVersion: 2
-      x: 492
-      y: 4
-      width: 3
-      height: 14
-    spriteID: 79d19da3162a7434baaad3013486cb33
-    spriteBone: []
-    spriteOutline: []
-    vertices: []
-    spritePhysicsOutline: []
-    indices: 
-    edges: []
-    tessellationDetail: 0
-    uvTransform: {x: 492, y: 4}
-  - name: Frame_5
-    originalName: 
-    pivot: {x: 80, y: 9.642858}
-    alignment: 9
-    border: {x: 0, y: 0, z: 0, w: 0}
-    customData: 
-    rect:
-      serializedVersion: 2
-      x: 492
-      y: 26
-      width: 3
-      height: 14
-    spriteID: 60b45f45f769bf343aeb2f52302fd04c
-    spriteBone: []
-    spriteOutline: []
-    vertices: []
-    spritePhysicsOutline: []
-    indices: 
-    edges: []
-    tessellationDetail: 0
-    uvTransform: {x: 492, y: 26}
+    uvTransform: {x: 0, y: 0}
+  tileSetImportData: []
   asepriteLayers:
   - layerIndex: 0
     uuid:
-      value0: 530759248
+      value0: 2500269715
       value1: 0
       value2: 0
       value3: 0
     guid: 0
-    name: ControlRoom
+    name: Minigame Sprites
     layerFlags: 0
     layerType: 0
     blendMode: 0
     cells:
-    - name: Frame_0
+    - name: Minigame Sprites
       frameIndex: 0
       additiveSortOrder: 0
       cellRect:
-        x: 0
-        y: 0
-        width: 480
-        height: 270
-      spriteId: efdeb3cc0a2b88644afc88caaefbed95
-    - name: Frame_1
-      frameIndex: 1
-      additiveSortOrder: 0
-      cellRect:
-        x: 0
-        y: 0
-        width: 480
-        height: 270
-      spriteId: b919f19cb330914458c10a84a76c600d
-    - name: Frame_7
-      frameIndex: 7
-      additiveSortOrder: 0
-      cellRect:
-        x: 0
-        y: 0
-        width: 480
-        height: 270
-      spriteId: b535c4f1877861144bb8254eb4ba57db
-    - name: Frame_2
-      frameIndex: 2
-      additiveSortOrder: 0
-      cellRect:
-        x: 32
+        x: 3
         y: 72
-        width: 416
-        height: 6
-      spriteId: d5926507082e6fc4eab7f805d8010af0
-    - name: Frame_3
-      frameIndex: 3
-      additiveSortOrder: 0
-      cellRect:
-        x: 64
-        y: 70
-        width: 32
-        height: 10
-      spriteId: b6210133977bdd9429637c9075bf0861
-    - name: Frame_4
-      frameIndex: 4
-      additiveSortOrder: 0
-      cellRect:
-        x: 256
-        y: 70
-        width: 32
-        height: 10
-      spriteId: 0013c2c651d511747a75e7d179b44311
-    - name: Frame_5
-      frameIndex: 5
-      additiveSortOrder: 0
-      cellRect:
-        x: 213
-        y: 65
-        width: 5
-        height: 20
-      spriteId: a887782db07c1e547b7a657a349d01ad
-    - name: Frame_6
-      frameIndex: 6
-      additiveSortOrder: 0
-      cellRect:
-        x: 31
-        y: 94
-        width: 417
-        height: 161
-      spriteId: bc0bbcb403e725640a8054279a669048
+        width: 300
+        height: 194
+      spriteId: ec56b45789138b946854462987618ecd
     linkedCells: []
     tileCells: []
     tileSetIndex: 0
@@ -601,5 +391,5 @@ ScriptedImporter:
     androidETC2FallbackOverride: 0
   generatePhysicsShape: 0
   secondarySpriteTextures: []
-  previousTextureSize: {x: 512, y: 1024}
+  previousTextureSize: {x: 512, y: 256}
   canvasSize: {x: 480, y: 270}

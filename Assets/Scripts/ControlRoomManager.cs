@@ -16,7 +16,7 @@ public class ControlRoomManager : MonoBehaviour
     public TextMeshProUGUI sanityText; 
 
     [Header("Minigame System")]
-    public GameObject minigamePanel;   // ลาก UI Panel ของมินิเกมมาใส่ช่องนี้
+    public GameObject minigamePanel;   
 
     [Header("Settings")]
     public float cursorSpeed = 500f;   
@@ -43,13 +43,21 @@ public class ControlRoomManager : MonoBehaviour
     public Transform shakeTarget;      
     public float shakeDuration = 0.2f;
     public float shakeMagnitude = 10f;
+    
+    [Header("Extra Juice (New!)")]
+    public Image damageFlashImage;     // ลาก UI Image สีแดงแบบเต็มจอมาใส่
+    public float hitPauseDuration = 0.05f; // เวลาที่เกมจะกระตุกหยุด (วินาที)
+    public float cursorBumpScale = 1.5f;   // ขนาดที่เส้นจะเด้งขยาย
+    public float cursorBumpTime = 0.1f;    // เวลาที่เส้นเด้ง
 
     private float timeRemaining;
     private bool isGameActive = true;
+    private bool isMinigameActive = false; 
     
     private float initialGreenWidth;
     private float initialRedWidth;
     private Vector3 originalShakePos;
+    private Vector3 originalCursorScale;
 
     private bool isGreenSpawning = false;
     private bool isRedSpawning = false;
@@ -57,6 +65,7 @@ public class ControlRoomManager : MonoBehaviour
     private Coroutine greenSpawnCoroutine;
     private Coroutine redSpawnCoroutine;
     private Coroutine shakeCoroutine; 
+    private Coroutine cursorBumpCoroutine;
 
     void Start()
     {
@@ -69,12 +78,16 @@ public class ControlRoomManager : MonoBehaviour
         initialGreenWidth = greenZone.rect.width;
         initialRedWidth = redZone.rect.width;
 
-        if (shakeTarget != null)
+        if (shakeTarget != null) originalShakePos = shakeTarget.localPosition;
+        if (cursor != null) originalCursorScale = cursor.localScale;
+        
+        if (damageFlashImage != null) 
         {
-            originalShakePos = shakeTarget.localPosition;
+            Color c = damageFlashImage.color;
+            c.a = 0f;
+            damageFlashImage.color = c;
         }
         
-        // ซ่อนหน้าต่างมินิเกมตอนเริ่มเกม
         if (minigamePanel != null) minigamePanel.SetActive(false);
 
         UpdateDayUI();
@@ -89,14 +102,17 @@ public class ControlRoomManager : MonoBehaviour
 
     void Update()
     {
-        if (!isGameActive) return;
+        if (!isGameActive) return; 
+
+        UpdateTimer(); 
+        if (isMinigameActive) return; 
 
         MoveCursorLoop();
-        UpdateTimer();
         ShrinkBoxes(); 
 
         if (Input.GetKeyDown(KeyCode.Space) || Input.GetMouseButtonDown(0))
         {
+            TriggerCursorBump(); // เด้งเส้นวิ่งทุกครั้งที่กด
             CheckHitZone();
         }
     }
@@ -128,7 +144,6 @@ public class ControlRoomManager : MonoBehaviour
         currentDay++;
         timeRemaining = gameTime;
         UpdateDayUI();
-        
         TriggerRespawn(greenZone, initialGreenWidth, redZone, true, true);
         TriggerRespawn(redZone, initialRedWidth, greenZone, false, true);
     }
@@ -169,6 +184,7 @@ public class ControlRoomManager : MonoBehaviour
     {
         currentSanity -= sanityDamage;
         TriggerShake(); 
+        StartCoroutine(FlashDamageScreen()); // จอแดงเมื่อกล่องหาย
         UpdateSanityUI();
         CheckGameOver();
 
@@ -199,8 +215,16 @@ public class ControlRoomManager : MonoBehaviour
         if (!spawnImmediately)
         {
             float waitTime = Random.Range(minSpawnDelay, maxSpawnDelay);
-            yield return new WaitForSeconds(waitTime);
+            float currentWaitTimer = 0f;
+            
+            while (currentWaitTimer < waitTime)
+            {
+                if (!isMinigameActive) currentWaitTimer += Time.deltaTime;
+                yield return null; 
+            }
         }
+        
+        yield return new WaitUntil(() => !isMinigameActive);
         
         float halfWidth = targetWidth / 2f;
         float newX = 0f;
@@ -208,10 +232,7 @@ public class ControlRoomManager : MonoBehaviour
         for (int i = 0; i < 15; i++) 
         {
             newX = Random.Range(startPointX + halfWidth, endPointX - halfWidth);
-            if (Mathf.Abs(newX - otherZone.anchoredPosition.x) >= minSpawnDistance)
-            {
-                break; 
-            }
+            if (Mathf.Abs(newX - otherZone.anchoredPosition.x) >= minSpawnDistance) break; 
         }
         
         zoneToSpawn.anchoredPosition = new Vector2(newX, zoneToSpawn.anchoredPosition.y);
@@ -219,9 +240,12 @@ public class ControlRoomManager : MonoBehaviour
         float elapsed = 0f;
         while (elapsed < spawnDuration)
         {
-            elapsed += Time.deltaTime;
-            float currentWidth = Mathf.Lerp(0, targetWidth, elapsed / spawnDuration);
-            zoneToSpawn.sizeDelta = new Vector2(currentWidth, zoneToSpawn.sizeDelta.y);
+            if (!isMinigameActive)
+            {
+                elapsed += Time.deltaTime;
+                float currentWidth = Mathf.Lerp(0, targetWidth, elapsed / spawnDuration);
+                zoneToSpawn.sizeDelta = new Vector2(currentWidth, zoneToSpawn.sizeDelta.y);
+            }
             yield return null; 
         }
 
@@ -234,6 +258,7 @@ public class ControlRoomManager : MonoBehaviour
     private void CheckHitZone()
     {
         float cursorX = cursor.anchoredPosition.x;
+        StartCoroutine(HitPauseRoutine()); // หยุดเวลาสั้นๆ ทุกครั้งที่ประมวลผลการกด
 
         if (IsInsideZone(cursorX, greenZone))
         {
@@ -250,58 +275,39 @@ public class ControlRoomManager : MonoBehaviour
         {
             currentSanity -= (sanityDamage / 4);
             TriggerShake(); 
+            StartCoroutine(FlashDamageScreen()); // จอแดงเมื่อวืด
         }
 
         UpdateSanityUI();
         CheckGameOver();
     }
 
-    // --- ระบบเรียกและปิด Minigame ---
     private void EnterMinigame()
     {
-        isGameActive = false; // ระงับเกมเพลย์หลักชั่วคราว
-        
-        if (minigamePanel != null)
-        {
-            minigamePanel.SetActive(true); // เปิด UI มินิเกม
-        }
+        isMinigameActive = true; 
+        if (minigamePanel != null) minigamePanel.SetActive(true); 
     }
 
-    // ฟังก์ชันนี้ให้ปุ่มหรือสคริปต์ในมินิเกมเรียกใช้เมื่อเล่นจบ
     public void FinishMinigame(bool isSuccess)
     {
-        if (minigamePanel != null)
-        {
-            minigamePanel.SetActive(false); // ซ่อน UI มินิเกม
-        }
+        isMinigameActive = false; 
+        if (minigamePanel != null) minigamePanel.SetActive(false); 
 
-        if (isSuccess)
+        if (!isSuccess)
         {
-            Debug.Log("มินิเกมสำเร็จ! รอดตัวไป");
-            // สามารถใส่ logic เพิ่มเลือดตรงนี้ได้
-        }
-        else
-        {
-            Debug.Log("มินิเกมล้มเหลว! ค่าสติลด");
             currentSanity -= sanityDamage;
             TriggerShake();
+            StartCoroutine(FlashDamageScreen()); // จอแดงเมื่อแพ้มินิเกม
         }
 
         UpdateSanityUI();
         CheckGameOver();
-
-        if (currentSanity > 0)
-        {
-            isGameActive = true; // กลับมาเล่นเกมหลักต่อ
-        }
     }
-    
 
     private void CheckGameOver()
     {
         if (currentSanity <= 0)
         {
-            Debug.Log("Game Over");
             isGameActive = false;
         }
     }
@@ -309,12 +315,13 @@ public class ControlRoomManager : MonoBehaviour
     private bool IsInsideZone(float xPos, RectTransform zone)
     {
         if (zone.rect.width <= 0) return false;
-        
         float halfWidth = zone.rect.width / 2f;
-        float minX = zone.anchoredPosition.x - halfWidth;
-        float maxX = zone.anchoredPosition.x + halfWidth;
-        return xPos >= minX && xPos <= maxX;
+        return xPos >= (zone.anchoredPosition.x - halfWidth) && xPos <= (zone.anchoredPosition.x + halfWidth);
     }
+
+    // ==========================================
+    // EXTRA JUICE METHODS
+    // ==========================================
 
     private void TriggerShake()
     {
@@ -328,18 +335,63 @@ public class ControlRoomManager : MonoBehaviour
     private IEnumerator ShakeEffect()
     {
         float elapsed = 0f;
-
         while (elapsed < shakeDuration)
         {
             float x = Random.Range(-1f, 1f) * shakeMagnitude;
             float y = Random.Range(-1f, 1f) * shakeMagnitude;
-
-            shakeTarget.localPosition = new Vector3(originalShakePos.x + x, originalShakePos.y + y, originalShakePos.z);
-            
-            elapsed += Time.deltaTime;
+            shakeTarget.localPosition = originalShakePos + new Vector3(x, y, 0);
+            elapsed += Time.unscaledDeltaTime; // ใช้ unscaled เผื่อติด Hit Pause
             yield return null;
         }
-
         shakeTarget.localPosition = originalShakePos; 
+    }
+
+    private IEnumerator HitPauseRoutine()
+    {
+        Time.timeScale = 0f; // หยุดเวลาทั้งเกม
+        yield return new WaitForSecondsRealtime(hitPauseDuration);
+        Time.timeScale = 1f; // คืนค่าเวลา
+    }
+
+    private void TriggerCursorBump()
+    {
+        if (cursor != null)
+        {
+            if (cursorBumpCoroutine != null) StopCoroutine(cursorBumpCoroutine);
+            cursorBumpCoroutine = StartCoroutine(CursorBumpRoutine());
+        }
+    }
+
+    private IEnumerator CursorBumpRoutine()
+    {
+        cursor.localScale = originalCursorScale * cursorBumpScale;
+        float elapsed = 0f;
+        while (elapsed < cursorBumpTime)
+        {
+            elapsed += Time.unscaledDeltaTime;
+            cursor.localScale = Vector3.Lerp(originalCursorScale * cursorBumpScale, originalCursorScale, elapsed / cursorBumpTime);
+            yield return null;
+        }
+        cursor.localScale = originalCursorScale;
+    }
+
+    private IEnumerator FlashDamageScreen()
+    {
+        if (damageFlashImage == null) yield break;
+
+        Color c = damageFlashImage.color;
+        c.a = 0.5f; // ความทึบของสีแดงตอนโผล่มา (ปรับเพิ่มลดได้)
+        damageFlashImage.color = c;
+
+        float flashDuration = 0.2f;
+        float elapsed = 0f;
+
+        while (elapsed < flashDuration)
+        {
+            elapsed += Time.unscaledDeltaTime;
+            c.a = Mathf.Lerp(0.5f, 0f, elapsed / flashDuration);
+            damageFlashImage.color = c;
+            yield return null;
+        }
     }
 }
