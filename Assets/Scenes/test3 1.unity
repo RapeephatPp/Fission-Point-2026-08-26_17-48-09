@@ -1546,19 +1546,19 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::AudioManager
   sfxLibrary:
   - key: clickSound
-    clip: {fileID: 8300000, guid: c4eb8cb1a49a2b246b819e06e0df20a1, type: 3}
+    clip: {fileID: 8300000, guid: 4a4d108080db37e48b74fd2456665d8e, type: 3}
     volume: 0.299
   - key: hitSound
-    clip: {fileID: 8300000, guid: 5d2fe4f5e4682984eab5afb9b89ea949, type: 3}
+    clip: {fileID: 8300000, guid: 9857dde363061c54b996665eb0570b05, type: 3}
     volume: 0.11
   - key: missSound
-    clip: {fileID: 8300000, guid: e8a6828ed633fa9448627dbdecb40fc3, type: 3}
-    volume: 0.11
+    clip: {fileID: 8300000, guid: 16f7523f7023a77419538ffbeab7fbf4, type: 3}
+    volume: 1
   - key: explosionSound
-    clip: {fileID: 8300000, guid: 6fde24db1040f9d42a072709cf49c2e7, type: 3}
+    clip: {fileID: 8300000, guid: fb1760af84897d54285517ba3d205562, type: 3}
     volume: 0.287
   - key: gameOverSound
-    clip: {fileID: 8300000, guid: 98c694e09d12f834ea5636306a3cd3d0, type: 3}
+    clip: {fileID: 8300000, guid: c2b8c990dcacc634fac564e6bb1c748e, type: 3}
     volume: 0.377
   loopLibrary:
   - key: ambientLoop
@@ -2135,7 +2135,7 @@ MonoBehaviour:
   endPointX: 650
   gameTime: 60
   currentDay: 1
-  maxSanity: 100
+  maxSanity: 5
   currentSanity: 0
   sanityHeal: 10
   sanityDamage: 20
