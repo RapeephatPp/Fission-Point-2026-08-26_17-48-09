@@ -882,7 +882,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b9d3b0f36edd3b84f980fbeb8aad8bef, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MiniGame_PresseInstructed
-  gameManager: {fileID: 0}
+  gameManager: {fileID: 1562883717}
   instructionText: {fileID: 1223158223}
   timerText: {fileID: 218202255}
   timerBar: {fileID: 0}
@@ -2177,7 +2177,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9d7616b594f8cf6479879d59f2c5203a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MiniGameHold
-  gameManager: {fileID: 0}
+  gameManager: {fileID: 1562883717}
   instructionText: {fileID: 1822692939}
   timerText: {fileID: 2131111266}
   playerGauge: {fileID: 1257343786}
