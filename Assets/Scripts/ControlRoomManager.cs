@@ -9,27 +9,32 @@ public class ControlRoomManager : MonoBehaviour
     public RectTransform cursor;
     public RectTransform greenZone;
     public RectTransform redZone;
+    
+    [Header("Event UI (New Mechanics)")]
+    public RectTransform yellowZone;   // กล่องรังสี (ห้ามกด)
+    public RectTransform blackoutZone; // กล่องปั่นไฟ (กดรัวๆ)
+    public Image eventBorderImage;     // ขอบจอเตือนภัยสีแดง
 
     [Header("Game Info UI")]
     public TextMeshProUGUI timerText;
     public TextMeshProUGUI dayText;
     public TextMeshProUGUI sanityText;
 
-    [Header("Notification UI (New!)")]
+    [Header("Notification UI")]
     public TextMeshProUGUI notificationText; 
     public float notificationDuration = 2.0f; 
-    public float typeWriterSpeed = 0.05f; // เพิ่มความเร็วในการพิมพ์ต่อ 1 ตัวอักษร (วินาที)
+    public float typeWriterSpeed = 0.05f; 
 
     [Header("Minigame System")]
-    public GameObject[] minigamePanels; // เปลี่ยนเป็น Array ให้ใส่ได้หลายๆ หน้าจอ
-    private GameObject currentActiveMinigame; // เอาไว้จำว่าตอนนี้เปิดอันไหนอยู่ จะได้ปิดถูก
+    public GameObject[] minigamePanels; 
+    private GameObject currentActiveMinigame; 
 
     [Header("Settings")]
     public float cursorSpeed = 500f;
     public float startPointX = -400f;
     public float endPointX = 400f;
     public int currentDay = 1;
-    public int maxDays = 7; // กำหนดวันสูงสุดที่ 7 วัน
+    public int maxDays = 7; 
 
     [Header("Sanity Settings")]
     public int maxSanity = 100;
@@ -48,7 +53,7 @@ public class ControlRoomManager : MonoBehaviour
     public float redSpawnDelayMax = 5.0f;     
     public float greenSpawnInterval = 4.0f; 
 
-    [Header("Forgiveness Mechanics (Design)")]
+    [Header("Forgiveness Mechanics")]
     public float greenHitboxMultiplier = 1.5f; 
     public float greenLifeTime = 3.0f;         
 
@@ -56,34 +61,48 @@ public class ControlRoomManager : MonoBehaviour
     public Transform shakeTarget;
     public float shakeDuration = 0.2f;
     public float shakeMagnitude = 10f;
-    
-    [Header("Extra Juice")]
     public Image damageFlashImage;     
     public float hitPauseDuration = 0.05f; 
     public float cursorBumpScale = 1.5f;   
     public float cursorBumpTime = 0.1f;    
 
+    // --- State Variables ---
     private float timeRemaining;
     private bool isGameActive = true;
     private bool isMinigameActive = false;
-    
     private bool isTutorialPhase = true;
 
     private float initialGreenWidth;
     private float initialRedWidth;
+    private float initialYellowWidth = 60f;
+    private float initialBlackoutWidth = 100f;
     private Vector3 originalShakePos;
     private Vector3 originalCursorScale;
 
     private bool isGreenSpawning = false;
     private bool isRedSpawning = false;
+    private bool isYellowSpawning = false;
+    private bool isBlackoutSpawning = false;
     
     private float greenTimer = 0f;
+    
+    // --- Random Event Variables ---
+    private float eventTimer = 0f;
+    private bool isMashingBlackout = false;
+    private int blackoutMashCount = 0;
+    private int requiredBlackoutMash = 5;
+    private bool isGlitching = false;
+    private bool isZonesMoving = false;
 
+    // --- Coroutines ---
     private Coroutine greenSpawnCoroutine;
     private Coroutine redSpawnCoroutine;
+    private Coroutine yellowSpawnCoroutine;
+    private Coroutine blackoutSpawnCoroutine;
     private Coroutine shakeCoroutine;
     private Coroutine cursorBumpCoroutine;
     private Coroutine notificationCoroutine;
+    private Coroutine eventBorderCoroutine;
 
     void Start()
     {
@@ -91,35 +110,25 @@ public class ControlRoomManager : MonoBehaviour
         Cursor.lockState = CursorLockMode.Locked;
 
         currentSanity = maxSanity;
-        timeRemaining = GetTimeForDay(currentDay); // ดึงเวลาตามวันที่
+        timeRemaining = GetTimeForDay(currentDay); 
 
         initialGreenWidth = greenZone.rect.width;
         initialRedWidth = redZone.rect.width;
+        if (yellowZone != null) initialYellowWidth = yellowZone.rect.width;
+        if (blackoutZone != null) initialBlackoutWidth = blackoutZone.rect.width;
 
         if (shakeTarget != null) originalShakePos = shakeTarget.localPosition;
         if (cursor != null) originalCursorScale = cursor.localScale;
 
-        if (damageFlashImage != null)
-        {
-            Color c = damageFlashImage.color;
-            c.a = 0f;
-            damageFlashImage.color = c;
-        }
-
-        if (notificationText != null)
-        {
-            Color c = notificationText.color;
-            c.a = 0f;
-            notificationText.color = c;
-            notificationText.gameObject.SetActive(false);
-        }
+        if (damageFlashImage != null) { Color c = damageFlashImage.color; c.a = 0f; damageFlashImage.color = c; }
+        if (eventBorderImage != null) { Color c = eventBorderImage.color; c.a = 0f; eventBorderImage.color = c; }
+        if (notificationText != null) { Color c = notificationText.color; c.a = 0f; notificationText.color = c; notificationText.gameObject.SetActive(false); }
+        if (yellowZone != null) yellowZone.sizeDelta = new Vector2(0, yellowZone.sizeDelta.y);
+        if (blackoutZone != null) blackoutZone.sizeDelta = new Vector2(0, blackoutZone.sizeDelta.y);
 
         if (minigamePanels != null)
         {
-            foreach (GameObject panel in minigamePanels)
-            {
-                if (panel != null) panel.SetActive(false);
-            }
+            foreach (GameObject panel in minigamePanels) { if (panel != null) panel.SetActive(false); }
         }
 
         UpdateDayUI();
@@ -128,12 +137,11 @@ public class ControlRoomManager : MonoBehaviour
         greenZone.anchoredPosition = new Vector2(startPointX + 100f, greenZone.anchoredPosition.y);
         redZone.anchoredPosition = new Vector2(endPointX - 100f, redZone.anchoredPosition.y);
 
-        TriggerRespawn(greenZone, initialGreenWidth, redZone, true, true);
-        TriggerRespawn(redZone, initialRedWidth, greenZone, false, true);
+        TriggerRespawn(greenZone, initialGreenWidth, redZone, 1, true);
+        TriggerRespawn(redZone, initialRedWidth, greenZone, 2, true);
 
         if (AudioManager.Instance != null) AudioManager.Instance.PlayAmbient("ambientLoop");
         
-        // แจ้งเตือนเริ่มเกม
         ShowNotification("DAY " + currentDay + "\nSURVIVE THE MELTDOWN");
     }
 
@@ -144,9 +152,16 @@ public class ControlRoomManager : MonoBehaviour
         UpdateTimer();
         if (isMinigameActive) return;
 
-        MoveCursorLoop();
+        // ถ้ารัวปุ่ม Blackout อยู่ เส้นจะหยุดวิ่ง
+        if (!isMashingBlackout) 
+        {
+            MoveCursorLoop();
+            MoveZones(); // อัปเดตกล่องดิ้น (ถ้ามี Event)
+        }
+
         ShrinkBoxes();
         HandleGreenLifeTime(); 
+        HandleRandomEvents();
 
         if (Input.GetKeyDown(KeyCode.Space) || Input.GetMouseButtonDown(0))
         {
@@ -158,34 +173,108 @@ public class ControlRoomManager : MonoBehaviour
 
     private void MoveCursorLoop()
     {
-        cursor.anchoredPosition += new Vector2(cursorSpeed * Time.deltaTime, 0);
-        if (cursor.anchoredPosition.x >= endPointX)
+        float speed = cursorSpeed;
+        
+        // Event: ระบบรวน ความเร็วเส้นจะสวิงไปมา
+        if (isGlitching) 
         {
-            cursor.anchoredPosition = new Vector2(startPointX, cursor.anchoredPosition.y);
+            speed = Random.Range(-cursorSpeed * 0.5f, cursorSpeed * 1.5f);
+        }
+
+        cursor.anchoredPosition += new Vector2(speed * Time.deltaTime, 0);
+        
+        if (cursor.anchoredPosition.x >= endPointX) cursor.anchoredPosition = new Vector2(startPointX, cursor.anchoredPosition.y);
+        else if (cursor.anchoredPosition.x <= startPointX) cursor.anchoredPosition = new Vector2(endPointX, cursor.anchoredPosition.y);
+    }
+
+    private void MoveZones()
+    {
+        // Event: แรงดันไม่เสถียร กล่องจะไหลซ้ายขวา
+        if (isZonesMoving)
+        {
+            float offset = Mathf.Sin(Time.time * 5f) * 80f * Time.deltaTime; 
+            if (greenZone.rect.width > 0) greenZone.anchoredPosition += new Vector2(offset, 0);
+            if (redZone.rect.width > 0) redZone.anchoredPosition -= new Vector2(offset, 0);
+            if (yellowZone != null && yellowZone.rect.width > 0) yellowZone.anchoredPosition += new Vector2(offset, 0);
         }
     }
 
-    // ฟังก์ชันคำนวณเวลาของแต่ละวัน
+    // ==========================================
+    // RANDOM EVENT SYSTEM (NEW!)
+    // ==========================================
+    private void HandleRandomEvents()
+    {
+        if (isTutorialPhase || currentDay <= 1 || isMashingBlackout) return;
+
+        eventTimer += Time.deltaTime;
+        if (eventTimer > 8.0f) // สุ่มทุกๆ 8 วินาที
+        {
+            eventTimer = 0f;
+            TriggerRandomEvent();
+        }
+    }
+
+    private void TriggerRandomEvent()
+    {
+        float rand = Random.value;
+
+        // 1. Blackout (Day 3-6)
+        if (currentDay >= 3 && currentDay <= 6 && rand < 0.3f && blackoutZone != null && blackoutZone.rect.width <= 0)
+        {
+            TriggerRespawn(blackoutZone, initialBlackoutWidth, redZone, 4, false);
+            ShowEventWarning("CRITICAL: POWER FAILURE");
+            if (ScreenFader.Instance != null) StartCoroutine(ScreenFader.Instance.FadeRoutine(0.85f));
+        }
+        // 2. Yellow Radiation (Day 4-7)
+        else if (currentDay >= 4 && rand >= 0.3f && rand < 0.6f && yellowZone != null && yellowZone.rect.width <= 0)
+        {
+            TriggerRespawn(yellowZone, initialYellowWidth, redZone, 3, false);
+            ShowEventWarning("WARNING: RADIATION LEAK");
+        }
+        // 3. Glitch / Moving Zones (Day 2-7)
+        else 
+        {
+            if (Random.value > 0.5f) StartCoroutine(GlitchRoutine());
+            else StartCoroutine(MovingZonesRoutine());
+        }
+    }
+
+    private IEnumerator GlitchRoutine()
+    {
+        isGlitching = true;
+        ShowEventWarning("SYSTEM GLITCH");
+        yield return new WaitForSeconds(3.5f);
+        isGlitching = false;
+    }
+
+    private IEnumerator MovingZonesRoutine()
+    {
+        isZonesMoving = true;
+        ShowEventWarning("UNSTABLE PRESSURE");
+        yield return new WaitForSeconds(5.0f);
+        isZonesMoving = false;
+    }
+
+    // ==========================================
+    // PROGRESSION & SPAWNING
+    // ==========================================
     private float GetTimeForDay(int day)
     {
-        if (day <= 4) return 60f;        // วันที่ 1-4 = 60 วิ
-        if (day == 5) return 90f;        // วันที่ 5 = 90 วิ
-        if (day == 6) return 105f;       // วันที่ 6 = 105 วิ
-        if (day >= 7) return 120f;       // วันที่ 7 = 120 วิ
+        if (day <= 4) return 60f;        
+        if (day == 5) return 90f;        
+        if (day == 6) return 105f;       
+        if (day >= 7) return 120f;       
         return 60f;
     }
 
     private void UpdateTimer()
     {
-        // 🟢 ถ้ายังอยู่ในโหมดฝึกสอน (ยังกดไม่โดนเลยสักครั้ง) ให้หยุดการนับเวลาไว้
         if (isTutorialPhase)
         {
-            // โชว์ตัวเลขเวลาค้างไว้ที่ค่าเริ่มต้น (เช่น 60s)
             if (timerText != null) timerText.text = "Time: " + Mathf.Ceil(timeRemaining).ToString("00");
-            return; // จบการทำงานฟังก์ชันนี้ทันทีโดยไม่ลดค่า Time.deltaTime
+            return; 
         }
 
-        // 🟢 ถ้าหลุดโหมดฝึกสอนแล้ว ให้นับเวลาถอยหลังตามปกติ
         if (timeRemaining > 0)
         {
             timeRemaining -= Time.deltaTime;
@@ -193,8 +282,7 @@ public class ControlRoomManager : MonoBehaviour
         }
         else
         {
-            // เปลี่ยนวันโดยใช้ Coroutine ที่เราทำไว้
-            StartCoroutine(DayTransitionRoutine());
+            AdvanceToNextDay();
         }
     }
 
@@ -205,23 +293,23 @@ public class ControlRoomManager : MonoBehaviour
             WinGame();
             return;
         }
-
-        // เปลี่ยนจากการอัปเดตทันที เป็นการเรียก Coroutine เพื่อทำแอนิเมชันจอดำ
         StartCoroutine(DayTransitionRoutine());
     }
 
     private IEnumerator DayTransitionRoutine()
     {
-        // 1. หยุดเกมหลักชั่วคราว (สคริปต์จะไม่รับ Input และเส้นจะไม่วิ่ง)
         isGameActive = false;
         
-        // 2. สั่งเฟดจอให้มืดสนิท (targetAlpha = 1f) แล้วรอจนกว่าจะเฟดเสร็จ
-        if (ScreenFader.Instance != null)
-        {
-            yield return StartCoroutine(ScreenFader.Instance.FadeRoutine(1f));
-        }
+        if (ScreenFader.Instance != null) yield return StartCoroutine(ScreenFader.Instance.FadeRoutine(1f));
 
-        // 3. แอบรีเซ็ตข้อมูลและเพิ่มความยากตอนที่หน้าจอกำลังดำสนิท
+        // Clear Event States
+        isMashingBlackout = false;
+        isGlitching = false;
+        isZonesMoving = false;
+        if (yellowZone != null) yellowZone.sizeDelta = new Vector2(0, yellowZone.sizeDelta.y);
+        if (blackoutZone != null) blackoutZone.sizeDelta = new Vector2(0, blackoutZone.sizeDelta.y);
+        if (eventBorderImage != null) { Color cb = eventBorderImage.color; cb.a = 0f; eventBorderImage.color = cb; }
+
         currentDay++;
         timeRemaining = GetTimeForDay(currentDay);
         
@@ -231,116 +319,108 @@ public class ControlRoomManager : MonoBehaviour
 
         UpdateDayUI();
         
-        // บังคับสุ่มกล่องใหม่แบบเกิดทันที (spawnImmediately = true)
-        TriggerRespawn(greenZone, initialGreenWidth, redZone, true, true);
-        TriggerRespawn(redZone, initialRedWidth, greenZone, false, true);
+        TriggerRespawn(greenZone, initialGreenWidth, redZone, 1, true);
+        TriggerRespawn(redZone, initialRedWidth, greenZone, 2, true);
 
-        if (AudioManager.Instance != null) 
-        {
-            AudioManager.Instance.PlaySFX("dayChangeSound");
-        }
+        if (AudioManager.Instance != null) AudioManager.Instance.PlaySFX("dayChangeSound");
 
-        // 4. สั่งเฟดจอให้กลับมาสว่าง (targetAlpha = 0f) แล้วรอจนเฟดเสร็จ
-        if (ScreenFader.Instance != null)
-        {
-            yield return StartCoroutine(ScreenFader.Instance.FadeRoutine(0f));
-        }
+        if (ScreenFader.Instance != null) yield return StartCoroutine(ScreenFader.Instance.FadeRoutine(0f));
 
-        // 5. ปลดล็อคให้เกมกลับมาเล่นต่อได้ พร้อมโชว์แจ้งเตือน
         isGameActive = true;
         ShowNotification("DAY " + currentDay);
     }
 
-    private void UpdateDayUI()
-    {
-        if (dayText != null) dayText.text = "Day: " + currentDay + "/" + maxDays;
-    }
-
-    private void UpdateSanityUI()
-    {
-        if (sanityText != null) sanityText.text = "Sanity: " + currentSanity + "/" + maxSanity;
-    }
+    private void UpdateDayUI() { if (dayText != null) dayText.text = "Day: " + currentDay + "/" + maxDays; }
+    private void UpdateSanityUI() { if (sanityText != null) sanityText.text = "Sanity: " + currentSanity + "/" + maxSanity; }
 
     private void HandleGreenLifeTime()
     {
         if (isGreenSpawning || greenZone.rect.width <= 0) return;
-
         greenTimer += Time.deltaTime;
-        if (greenTimer >= greenLifeTime)
-        {
-            TriggerRespawn(greenZone, initialGreenWidth, redZone, true, false);
-        }
+        if (greenTimer >= greenLifeTime) TriggerRespawn(greenZone, initialGreenWidth, redZone, 1, false);
     }
 
     private void ShrinkBoxes()
     {
         if (!isGreenSpawning && greenZone.rect.width > minGreenWidth)
         {
-            float newWidth = greenZone.rect.width - (greenShrinkRate * Time.deltaTime);
-            greenZone.sizeDelta = new Vector2(Mathf.Max(newWidth, minGreenWidth), greenZone.sizeDelta.y);
+            greenZone.sizeDelta = new Vector2(Mathf.Max(greenZone.rect.width - (greenShrinkRate * Time.deltaTime), minGreenWidth), greenZone.sizeDelta.y);
         }
 
         if (!isRedSpawning && redZone.rect.width > 0)
         {
             float newRedWidth = redZone.rect.width - (redShrinkRate * Time.deltaTime);
-            if (newRedWidth <= 0)
+            if (newRedWidth <= 0) OnRedZoneDisappeared();
+            else redZone.sizeDelta = new Vector2(newRedWidth, redZone.sizeDelta.y);
+        }
+
+        // กล่องเหลืองหดช้าๆ ปล่อยทิ้งได้ไม่เป็นไร
+        if (!isYellowSpawning && yellowZone != null && yellowZone.rect.width > 0)
+        {
+            float newYelWidth = yellowZone.rect.width - (greenShrinkRate * Time.deltaTime);
+            yellowZone.sizeDelta = new Vector2(Mathf.Max(newYelWidth, 0), yellowZone.sizeDelta.y);
+        }
+
+        // กล่อง Blackout ถ้าหดจนหมดก่อนปั่นไฟเสร็จ = บึ้ม!
+        if (!isBlackoutSpawning && blackoutZone != null && blackoutZone.rect.width > 0)
+        {
+            float newBlkWidth = blackoutZone.rect.width - (redShrinkRate * 0.7f * Time.deltaTime);
+            if (newBlkWidth <= 0)
             {
-                OnRedZoneDisappeared();
+                isMashingBlackout = false;
+                currentSanity -= sanityDamage;
+                TriggerShake();
+                StartCoroutine(FlashDamageScreen()); 
+                if (AudioManager.Instance != null) AudioManager.Instance.PlaySFX("explosionSound");
+                blackoutZone.sizeDelta = new Vector2(0, blackoutZone.sizeDelta.y);
+                if (ScreenFader.Instance != null) StartCoroutine(ScreenFader.Instance.FadeRoutine(0f)); 
+                UpdateSanityUI();
+                CheckGameOver();
             }
-            else
-            {
-                redZone.sizeDelta = new Vector2(newRedWidth, redZone.sizeDelta.y);
-            }
+            else blackoutZone.sizeDelta = new Vector2(newBlkWidth, blackoutZone.sizeDelta.y);
         }
     }
 
     private void OnRedZoneDisappeared()
     {
-        int actualDamage = isTutorialPhase ? 1 : sanityDamage;
-        currentSanity -= actualDamage;
-
+        currentSanity -= isTutorialPhase ? 1 : sanityDamage;
         TriggerShake();
         StartCoroutine(FlashDamageScreen()); 
         if (AudioManager.Instance != null) AudioManager.Instance.PlaySFX("explosionSound");
         UpdateSanityUI();
         CheckGameOver();
-
-        if (isGameActive)
-        {
-            TriggerRespawn(redZone, initialRedWidth, greenZone, false, false);
-        }
+        if (isGameActive) TriggerRespawn(redZone, initialRedWidth, greenZone, 2, false);
     }
 
-    private void TriggerRespawn(RectTransform zoneToSpawn, float targetWidth, RectTransform otherZone, bool isGreen, bool spawnImmediately)
+    // zoneType: 1=Green, 2=Red, 3=Yellow, 4=Blackout
+    private void TriggerRespawn(RectTransform zoneToSpawn, float targetWidth, RectTransform otherZone, int zoneType, bool spawnImmediately)
     {
-        if (isGreen && greenSpawnCoroutine != null) StopCoroutine(greenSpawnCoroutine);
-        if (!isGreen && redSpawnCoroutine != null) StopCoroutine(redSpawnCoroutine);
+        if (zoneType == 1 && greenSpawnCoroutine != null) StopCoroutine(greenSpawnCoroutine);
+        else if (zoneType == 2 && redSpawnCoroutine != null) StopCoroutine(redSpawnCoroutine);
+        else if (zoneType == 3 && yellowSpawnCoroutine != null) StopCoroutine(yellowSpawnCoroutine);
+        else if (zoneType == 4 && blackoutSpawnCoroutine != null) StopCoroutine(blackoutSpawnCoroutine);
 
-        Coroutine newRoutine = StartCoroutine(GradualSpawnRoutine(zoneToSpawn, targetWidth, otherZone, isGreen, spawnImmediately));
+        Coroutine newRoutine = StartCoroutine(GradualSpawnRoutine(zoneToSpawn, targetWidth, otherZone, zoneType, spawnImmediately));
 
-        if (isGreen) greenSpawnCoroutine = newRoutine;
-        else redSpawnCoroutine = newRoutine;
+        if (zoneType == 1) greenSpawnCoroutine = newRoutine;
+        else if (zoneType == 2) redSpawnCoroutine = newRoutine;
+        else if (zoneType == 3) yellowSpawnCoroutine = newRoutine;
+        else if (zoneType == 4) blackoutSpawnCoroutine = newRoutine;
     }
 
-    private IEnumerator GradualSpawnRoutine(RectTransform zoneToSpawn, float targetWidth, RectTransform otherZone, bool isGreen, bool spawnImmediately)
+    private IEnumerator GradualSpawnRoutine(RectTransform zoneToSpawn, float targetWidth, RectTransform otherZone, int zoneType, bool spawnImmediately)
     {
-        if (isGreen) 
-        {
-            isGreenSpawning = true;
-            greenTimer = 0f; 
-        }
-        else 
-        {
-            isRedSpawning = true;
-        }
+        if (zoneType == 1) { isGreenSpawning = true; greenTimer = 0f; }
+        else if (zoneType == 2) isRedSpawning = true;
+        else if (zoneType == 3) isYellowSpawning = true;
+        else if (zoneType == 4) isBlackoutSpawning = true;
 
         zoneToSpawn.sizeDelta = new Vector2(0, zoneToSpawn.sizeDelta.y);
 
         if (!spawnImmediately)
         {
-            float waitTime = isGreen ? greenSpawnInterval : Random.Range(redSpawnDelayMin, redSpawnDelayMax);
+            float waitTime = (zoneType == 1) ? greenSpawnInterval : Random.Range(redSpawnDelayMin, redSpawnDelayMax);
             float currentWaitTimer = 0f;
-
             while (currentWaitTimer < waitTime)
             {
                 if (!isMinigameActive) currentWaitTimer += Time.deltaTime;
@@ -352,7 +432,6 @@ public class ControlRoomManager : MonoBehaviour
 
         float halfWidth = targetWidth / 2f;
         float newX = 0f;
-
         for (int i = 0; i < 15; i++)
         {
             newX = Random.Range(startPointX + halfWidth, endPointX - halfWidth);
@@ -364,7 +443,7 @@ public class ControlRoomManager : MonoBehaviour
         float elapsed = 0f;
         while (elapsed < spawnDuration)
         {
-            if (!isMinigameActive)
+            if (!isMinigameActive && !isMashingBlackout)
             {
                 elapsed += Time.deltaTime;
                 float currentWidth = Mathf.Lerp(0, targetWidth, elapsed / spawnDuration);
@@ -375,8 +454,10 @@ public class ControlRoomManager : MonoBehaviour
 
         zoneToSpawn.sizeDelta = new Vector2(targetWidth, zoneToSpawn.sizeDelta.y);
 
-        if (isGreen) isGreenSpawning = false;
-        else isRedSpawning = false;
+        if (zoneType == 1) isGreenSpawning = false;
+        else if (zoneType == 2) isRedSpawning = false;
+        else if (zoneType == 3) isYellowSpawning = false;
+        else if (zoneType == 4) isBlackoutSpawning = false;
     }
 
     private void CheckHitZone()
@@ -384,37 +465,65 @@ public class ControlRoomManager : MonoBehaviour
         float cursorX = cursor.anchoredPosition.x;
         StartCoroutine(HitPauseRoutine()); 
 
+        // 1. ถ้ากำลังรัวปุ่มไฟตก (Blackout Priority)
+        if (isMashingBlackout)
+        {
+            blackoutMashCount++;
+            if (ScreenFader.Instance != null) StartCoroutine(ScreenFader.Instance.FadeRoutine(0.85f - (0.85f * (blackoutMashCount / (float)requiredBlackoutMash))));
+            
+            if (blackoutMashCount >= requiredBlackoutMash)
+            {
+                isMashingBlackout = false;
+                blackoutZone.sizeDelta = new Vector2(0, blackoutZone.sizeDelta.y);
+                currentSanity += sanityHeal;
+                if (currentSanity > maxSanity) currentSanity = maxSanity;
+                
+                ShowNotification("POWER RESTORED");
+                if (ScreenFader.Instance != null) StartCoroutine(ScreenFader.Instance.FadeRoutine(0f));
+            }
+            return; 
+        }
+
+        // 2. ถ้ากดติดกล่องไฟตก (ล็อค Cursor เข้าสู่การปั่นไฟ)
+        if (blackoutZone != null && blackoutZone.rect.width > 0 && IsInsideZone(cursorX, blackoutZone, 1.2f))
+        {
+            isMashingBlackout = true;
+            blackoutMashCount = 1;
+            return;
+        }
+
+        // 3. ถ้ากดโดนกล่องรังสี (ห้ามกด!)
+        if (yellowZone != null && yellowZone.rect.width > 0 && IsInsideZone(cursorX, yellowZone, 1.0f))
+        {
+            currentSanity -= sanityDamage;
+            TriggerShake();
+            StartCoroutine(FlashDamageScreen()); 
+            if (AudioManager.Instance != null) AudioManager.Instance.PlaySFX("missSound");
+            yellowZone.sizeDelta = new Vector2(0, yellowZone.sizeDelta.y);
+            UpdateSanityUI();
+            CheckGameOver();
+            return;
+        }
+
+        // 4. เช็คกล่องปกติ (เขียว / แดง)
         if (IsInsideZone(cursorX, greenZone, greenHitboxMultiplier))
         {
-            int actualHeal = isTutorialPhase ? 1 : sanityHeal;
-            currentSanity += actualHeal;
+            currentSanity += isTutorialPhase ? 1 : sanityHeal;
             if (currentSanity > maxSanity) currentSanity = maxSanity;
+            if (isTutorialPhase) { isTutorialPhase = false; ShowNotification("TUTORIAL CLEARED"); }
             
-            if (isTutorialPhase)
-            {
-                isTutorialPhase = false; 
-                /*ShowNotification("TUTORIAL CLEARED\nReal Meltdown Begins!");*/
-            }
-            
-            TriggerRespawn(greenZone, initialGreenWidth, redZone, true, false);
+            TriggerRespawn(greenZone, initialGreenWidth, redZone, 1, false);
             if (AudioManager.Instance != null) AudioManager.Instance.PlaySFX("hitSound");
         }
         else if (IsInsideZone(cursorX, redZone, 1.0f)) 
         {
-            if (isTutorialPhase)
-            {
-                isTutorialPhase = false;
-                /*ShowNotification("TUTORIAL CLEARED\nReal Meltdown Begins!");*/
-            }
-
-            TriggerRespawn(redZone, initialRedWidth, greenZone, false, false);
+            if (isTutorialPhase) { isTutorialPhase = false; ShowNotification("TUTORIAL CLEARED"); }
+            TriggerRespawn(redZone, initialRedWidth, greenZone, 2, false);
             EnterMinigame();
         }
         else
         {
-            int actualDamage = isTutorialPhase ? 1 : (sanityDamage / 4);
-            currentSanity -= actualDamage;
-
+            currentSanity -= isTutorialPhase ? 1 : (sanityDamage / 4);
             TriggerShake();
             StartCoroutine(FlashDamageScreen()); 
             if (AudioManager.Instance != null) AudioManager.Instance.PlaySFX("missSound");
@@ -427,38 +536,26 @@ public class ControlRoomManager : MonoBehaviour
     private void EnterMinigame()
     {
         isMinigameActive = true;
-        
-        // สุ่มเลือก 1 มินิเกมจาก Array
         if (minigamePanels != null && minigamePanels.Length > 0)
         {
-            int randomIndex = Random.Range(0, minigamePanels.Length);
-            currentActiveMinigame = minigamePanels[randomIndex];
+            currentActiveMinigame = minigamePanels[Random.Range(0, minigamePanels.Length)];
             currentActiveMinigame.SetActive(true);
         }
-        
         if (AudioManager.Instance != null) AudioManager.Instance.PlaySFX("minigameTransitionInSound");
     }
 
     public void FinishMinigame(bool isSuccess)
     {
         isMinigameActive = false;
-        if (currentActiveMinigame != null) 
-        {
-            currentActiveMinigame.SetActive(false);
-            currentActiveMinigame = null; // เคลียร์ความจำ
-        }
-
+        if (currentActiveMinigame != null) { currentActiveMinigame.SetActive(false); currentActiveMinigame = null; }
         if (AudioManager.Instance != null) AudioManager.Instance.PlaySFX(isSuccess ? "minigameWinSound" : "minigameLoseSound");
 
         if (!isSuccess)
         {
-            int actualDamage = isTutorialPhase ? 1 : sanityDamage;
-            currentSanity -= actualDamage;
-
+            currentSanity -= isTutorialPhase ? 1 : sanityDamage;
             TriggerShake();
             StartCoroutine(FlashDamageScreen()); 
         }
-
         UpdateSanityUI();
         CheckGameOver();
     }
@@ -469,12 +566,7 @@ public class ControlRoomManager : MonoBehaviour
         {
             isGameActive = false;
             ShowNotification("MELTDOWN!\nSYSTEM FAILURE");
-
-            if (AudioManager.Instance != null)
-            {
-                AudioManager.Instance.StopAmbient();
-                AudioManager.Instance.PlaySFX("gameOverSound");
-            }
+            if (AudioManager.Instance != null) { AudioManager.Instance.StopAmbient(); AudioManager.Instance.PlaySFX("gameOverSound"); }
         }
     }
 
@@ -483,14 +575,11 @@ public class ControlRoomManager : MonoBehaviour
         isGameActive = false;
         timerText.text = "Time: 00";
         ShowNotification("SURVIVED!\nSYSTEM STABILIZED");
-        
-        // TODO: สามารถเพิ่มการหน่วงเวลาเพื่อเรียกหน้าฉากจบ (Victory Screen) ได้ตรงนี้
     }
 
     private bool IsInsideZone(float xPos, RectTransform zone, float hitboxMultiplier)
     {
         if (zone.rect.width <= 0) return false;
-        
         float halfWidth = (zone.rect.width * hitboxMultiplier) / 2f; 
         return xPos >= (zone.anchoredPosition.x - halfWidth) && xPos <= (zone.anchoredPosition.x + halfWidth);
     }
@@ -498,6 +587,27 @@ public class ControlRoomManager : MonoBehaviour
     // ==========================================
     // NOTIFICATION & JUICE METHODS
     // ==========================================
+    private void ShowEventWarning(string message)
+    {
+        ShowNotification(message);
+        if (eventBorderImage != null) StartCoroutine(PulseEventBorder());
+    }
+
+    private IEnumerator PulseEventBorder()
+    {
+        if (eventBorderImage == null) yield break;
+        Color c = eventBorderImage.color;
+        float elapsed = 0f;
+        while(elapsed < 2.5f) 
+        {
+            elapsed += Time.unscaledDeltaTime;
+            c.a = Mathf.PingPong(elapsed * 2f, 0.6f); 
+            eventBorderImage.color = c;
+            yield return null;
+        }
+        c.a = 0f;
+        eventBorderImage.color = c;
+    }
 
     private void ShowNotification(string message)
     {
@@ -510,29 +620,21 @@ public class ControlRoomManager : MonoBehaviour
 
     private IEnumerator NotificationRoutine(string message)
     {
-        // ตั้งค่าข้อความ และซ่อนตัวอักษรทั้งหมดไว้ก่อน (ให้เหลือ 0 ตัว)
         notificationText.text = message;
         notificationText.maxVisibleCharacters = 0;
         notificationText.gameObject.SetActive(true);
-        
-        // รีเซ็ตค่า Alpha ให้เป็นสีทึบ 100% ตั้งแต่แรก (เผื่อของเก่าเฟดจางไว้)
         Color c = notificationText.color;
         c.a = 1f;
         notificationText.color = c;
 
-        // 1. Typewriter Effect (ค่อยๆ โชว์ทีละตัว)
         for (int i = 0; i <= message.Length; i++)
         {
             notificationText.maxVisibleCharacters = i;
-            
-            // ใช้ Realtime เผื่อกรณีเกมโดน Pause ไว้จะได้พิมพ์ต่อได้
             yield return new WaitForSecondsRealtime(typeWriterSpeed);
         }
 
-        // 2. Show (ค้างข้อความไว้ให้ผู้เล่นอ่าน)
         yield return new WaitForSecondsRealtime(notificationDuration);
 
-        // 3. Fade Out (ค่อยๆ จางหายไปแบบสมูท)
         float fadeTime = 0.3f;
         float elapsed = 0f;
         while (elapsed < fadeTime)
@@ -542,17 +644,12 @@ public class ControlRoomManager : MonoBehaviour
             notificationText.color = c;
             yield return null;
         }
-
         notificationText.gameObject.SetActive(false);
     }
 
     private void TriggerShake()
     {
-        if (shakeTarget != null)
-        {
-            if (shakeCoroutine != null) StopCoroutine(shakeCoroutine);
-            shakeCoroutine = StartCoroutine(ShakeEffect());
-        }
+        if (shakeTarget != null) { if (shakeCoroutine != null) StopCoroutine(shakeCoroutine); shakeCoroutine = StartCoroutine(ShakeEffect()); }
     }
 
     private IEnumerator ShakeEffect()
@@ -578,11 +675,7 @@ public class ControlRoomManager : MonoBehaviour
 
     private void TriggerCursorBump()
     {
-        if (cursor != null)
-        {
-            if (cursorBumpCoroutine != null) StopCoroutine(cursorBumpCoroutine);
-            cursorBumpCoroutine = StartCoroutine(CursorBumpRoutine());
-        }
+        if (cursor != null) { if (cursorBumpCoroutine != null) StopCoroutine(cursorBumpCoroutine); cursorBumpCoroutine = StartCoroutine(CursorBumpRoutine()); }
     }
 
     private IEnumerator CursorBumpRoutine()
@@ -601,14 +694,11 @@ public class ControlRoomManager : MonoBehaviour
     private IEnumerator FlashDamageScreen()
     {
         if (damageFlashImage == null) yield break;
-
         Color c = damageFlashImage.color;
         c.a = 0.5f; 
         damageFlashImage.color = c;
-
         float flashDuration = 0.2f;
         float elapsed = 0f;
-
         while (elapsed < flashDuration)
         {
             elapsed += Time.unscaledDeltaTime;
