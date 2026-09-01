@@ -10,10 +10,16 @@ public class MiniGameHold : MonoBehaviour
     public TextMeshProUGUI instructionText;
     public TextMeshProUGUI timerText;
 
-    [Header("UI Elements")]
-    public Image playerGauge;          
-    public RectTransform targetZone;   
-    public Image errorBar;
+    [Header("UI Elements (Updated for New Assets)")]
+    public RectTransform playerIndicator; 
+    public RectTransform targetZone;      
+    public Image errorBar;                
+
+    [Header("UI Movement Bounds (ปรับตำแหน่งขึ้น-ลง)")]
+    [Tooltip("ตำแหน่ง Y ต่ำสุดของกรอบ (ลองเลื่อน UI ลงล่างสุดแล้วเอาค่า Pos Y มาใส่)")]
+    public float minYPos = -180f;
+    [Tooltip("ตำแหน่ง Y สูงสุดของกรอบ (ลองเลื่อน UI ขึ้นบนสุดแล้วเอาค่า Pos Y มาใส่)")]
+    public float maxYPos = 180f;
 
     [Header("Button Visual (EF Botton)")]
     public RectTransform buttonVisual;       
@@ -26,8 +32,9 @@ public class MiniGameHold : MonoBehaviour
     public float gaugeDownSpeed = 2f;  
 
     [Header("Zone & Penalty Settings")]
-    public float zoneSize = 0.25f;       
-    public float errorPenalty ;    
+    [Tooltip("ความยาก (0.0 - 1.0) ขนาดเป้าหมายในการคำนวณหลังบ้าน")]
+    public float zoneSize = 0.15f;       
+    public float errorPenalty;    
     public float errorRecover = 0.2f;
 
     [Header("Moving Zone")] 
@@ -35,24 +42,32 @@ public class MiniGameHold : MonoBehaviour
     public float movingChance = 0.7f;      
     public float moveSpeed = 0.3f;
 
+    // --- State Variables ---
     private float currentGauge = 0f;
     private float currentError = 0f;
     private float timer = 0f;
 
     private float targetMin = 0f;
     private float targetMax = 0f;
+    private float targetCenter = 0f;
 
     private bool isGameActive = false;
     private bool isZoneMoving = false;
     private float randomTimeOffset = 0f;
 
     private Vector3 originalButtonScale;
+    private Image targetZoneImage; 
     
     private void Awake()
     {
         if (buttonVisual != null)
         {
             originalButtonScale = buttonVisual.localScale;
+        }
+
+        if (targetZone != null)
+        {
+            targetZoneImage = targetZone.GetComponent<Image>();
         }
     }
 
@@ -105,7 +120,6 @@ public class MiniGameHold : MonoBehaviour
         }
      
         if (instructionText != null) instructionText.text = "Hold in gauge..";
-        if (playerGauge != null) playerGauge.fillAmount = 0f;
         if (errorBar != null) errorBar.fillAmount = 0f;
 
         isGameActive = true;
@@ -114,9 +128,9 @@ public class MiniGameHold : MonoBehaviour
     private void Update()
     {
         if (!isGameActive) return;
+
         if (isZoneMoving)
         {
-            
             targetMin = Mathf.PingPong((Time.time + randomTimeOffset) * moveSpeed, 1f - zoneSize);
             UpdateZoneUI();
         }
@@ -124,57 +138,70 @@ public class MiniGameHold : MonoBehaviour
         timer -= Time.deltaTime;
         if (timerText != null) timerText.text = Mathf.Ceil(timer).ToString() + "s";
 
-        
+        // ควบคุมเกจผู้เล่น
         if (Input.GetKey(KeyCode.Space) || Input.GetMouseButton(0))
         {
             currentGauge += gaugeUpSpeed * Time.deltaTime;
-
             if (buttonVisual != null)
-            {
                 buttonVisual.localScale = Vector3.Lerp(buttonVisual.localScale, originalButtonScale * pressedScale, Time.deltaTime * buttonLerpSpeed);
-            }
         }
         else
         {
             currentGauge -= gaugeDownSpeed * Time.deltaTime;
             if (buttonVisual != null)
-            {
                 buttonVisual.localScale = Vector3.Lerp(buttonVisual.localScale, originalButtonScale, Time.deltaTime * buttonLerpSpeed);
-            }
         }
 
         currentGauge = Mathf.Clamp01(currentGauge);
-        if (playerGauge != null) playerGauge.fillAmount = currentGauge;
 
-        
+        // 🟢 เลื่อนแท่งสีส้ม (Player Indicator) แบบตรงไปตรงมา ไม่ยุ่งกับ Anchor
+        if (playerIndicator != null)
+        {
+            float visualY = Mathf.Lerp(minYPos, maxYPos, currentGauge);
+            playerIndicator.anchoredPosition = new Vector2(playerIndicator.anchoredPosition.x, visualY);
+        }
+
         bool isInZone = currentGauge >= targetMin && currentGauge <= targetMax;
+
+        // เปลี่ยนสีเมื่อเข้าเป้า
+        if (targetZoneImage != null)
+        {
+            Color baseBlue = new Color(0.2f, 0.6f, 1f); 
+            targetZoneImage.color = isInZone ? Color.green : baseBlue;
+        }
 
         if (!isInZone)
         {
-            
             currentError += errorPenalty * Time.deltaTime;
         }
         else
         {
-            
             currentError -= errorRecover * Time.deltaTime;
         }
 
         currentError = Mathf.Clamp01(currentError);
 
+        // อัปเดตหลอดสีแดง
         if (errorBar != null)
         {
             errorBar.fillAmount = currentError;
+
+            if (currentError > 0.7f)
+            {
+                errorBar.color = Color.Lerp(Color.red, Color.white, Mathf.PingPong(Time.time * 15f, 1f));
+            }
+            else
+            {
+                errorBar.color = Color.red; 
+            }
         }
     
         if (currentError >= 1f)
         {
-            
             LoseGame();
         }
         else if (timer <= 0)
         {
-            
             WinGame();
         }
     }
@@ -182,13 +209,13 @@ public class MiniGameHold : MonoBehaviour
     private void UpdateZoneUI()
     {
         targetMax = targetMin + zoneSize;
+        targetCenter = targetMin + (zoneSize / 2f);
 
+        // 🟢 เลื่อนแท่งสีฟ้า (Target Zone) ตามจุด Center ไม่ยุ่งกับสเกล
         if (targetZone != null)
         {
-            targetZone.anchorMin = new Vector2(0, targetMin);
-            targetZone.anchorMax = new Vector2(1, targetMax);
-            targetZone.offsetMin = Vector2.zero;
-            targetZone.offsetMax = Vector2.zero;
+            float targetVisualY = Mathf.Lerp(minYPos, maxYPos, targetCenter);
+            targetZone.anchoredPosition = new Vector2(targetZone.anchoredPosition.x, targetVisualY);
         }
     }
 

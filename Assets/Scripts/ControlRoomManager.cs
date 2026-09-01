@@ -670,7 +670,7 @@ public class ControlRoomManager : MonoBehaviour
         if (currentSanity <= 0)
         {
             isGameActive = false;
-            ShowNotification("MELTDOWN!\nSYSTEM FAILURE", "TIP: Press R or Restart to try again.");
+            ShowNotification("MELTDOWN!\nSYSTEM FAILURE", "");
             if (AudioManager.Instance != null) { AudioManager.Instance.StopAmbient(); AudioManager.Instance.PlaySFX("gameOverSound"); }
         }
     }

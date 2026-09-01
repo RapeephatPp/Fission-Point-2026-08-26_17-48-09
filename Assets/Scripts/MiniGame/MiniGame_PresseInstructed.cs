@@ -11,15 +11,21 @@ public class MiniGame_PresseInstructed : MonoBehaviour
     public TextMeshProUGUI timerText;
     public Image timerBar;
 
-    [Header("UI Visuals & Juice")]
+    [Header("UI Visuals & Sprites")]
     public RectTransform buttonVisual; 
+    
+    // 🟢 เปลี่ยนจากการใช้ Color เป็นการสลับ Sprite แทน
+    [Tooltip("รูปปุ่มสถานะปกติ (ก่อนกด/กำลังเล่น)")]
+    public Sprite defaultButtonSprite; 
+    [Tooltip("รูปปุ่มเมื่อกดสำเร็จ (รูปสีเขียว)")]
+    public Sprite successButtonSprite; 
+    [Tooltip("รูปปุ่มเมื่อกดพลาด (รูปสีแดง)")]
+    public Sprite failButtonSprite;    
+
     public float pressedScale = 0.85f;
     public float pressDuration = 0.15f; 
-    public Color successColor = Color.green;
-    public Color failColor = Color.red;
 
     private Image buttonImage; 
-    private Color originalButtonColor;
 
     [Header("Minigame Settings")]
     public int minRounds = 1;                 
@@ -55,7 +61,12 @@ public class MiniGame_PresseInstructed : MonoBehaviour
             originalButtonScale = buttonVisual.localScale;
 
             buttonImage = buttonVisual.GetComponent<Image>();
-            if (buttonImage != null) originalButtonColor = buttonImage.color;
+            
+            // ถ้าไม่ได้ลากรูป Default มาใส่ ให้จดจำรูปแรกเริ่มที่ตั้งไว้ใน Image แทน
+            if (buttonImage != null && defaultButtonSprite == null)
+            {
+                defaultButtonSprite = buttonImage.sprite;
+            }
         }
     }
 
@@ -64,18 +75,23 @@ public class MiniGame_PresseInstructed : MonoBehaviour
         if (buttonVisual != null)
         {
             buttonVisual.localScale = originalButtonScale;
-            if (buttonImage != null) buttonImage.color = originalButtonColor;
+            
+            // รีเซ็ตภาพกลับเป็นปุ่มปกติทุกครั้งที่เปิดมินิเกมขึ้นมาใหม่
+            if (buttonImage != null && defaultButtonSprite != null)
+            {
+                buttonImage.sprite = defaultButtonSprite;
+                buttonImage.color = Color.white; // ล้างค่า Tint สี เผื่อเผลอไปปรับไว้
+            }
         }
         StartMinigame();
     }
 
     public void StartMinigame()
     {
-        // เพิ่มตัวดักบั๊กตรงนี้
         if (gameManager == null)
         {
             Debug.LogError("ยังไม่ได้ใส่ Game Manager ในหน้าต่าง Inspector ของมินิเกม กด! ไปลากมาใส่ซะดีๆ");
-            return; // หยุดการทำงานทันทีเพื่อไม่ให้เกมพัง
+            return; 
         }
 
         int day = gameManager.currentDay;
@@ -112,7 +128,12 @@ public class MiniGame_PresseInstructed : MonoBehaviour
         timeSinceLastPress = 0f;
 
         if (timerBar != null) timerBar.fillAmount = 1f;
-        if (buttonImage != null) buttonImage.color = originalButtonColor;
+        
+        // รีเซ็ตรูปภาพเมื่อเริ่มรอบใหม่
+        if (buttonImage != null && defaultButtonSprite != null) 
+        {
+            buttonImage.sprite = defaultButtonSprite;
+        }
 
         if (currentRound > 1 && Random.value <= sameAsLastChance)
         {
@@ -194,7 +215,11 @@ public class MiniGame_PresseInstructed : MonoBehaviour
 
         if (currentPresses == targetPresses)
         {
-            if (buttonImage != null) buttonImage.color = successColor;
+            // 🟢 เปลี่ยนรูปเป็นปุ่มสีเขียวเมื่อสำเร็จ
+            if (buttonImage != null && successButtonSprite != null) 
+            {
+                buttonImage.sprite = successButtonSprite;
+            }
 
             if (currentRound >= totalRounds)
             {
@@ -211,7 +236,11 @@ public class MiniGame_PresseInstructed : MonoBehaviour
         }
         else
         {
-            if (buttonImage != null) buttonImage.color = failColor;
+            // 🟢 เปลี่ยนรูปเป็นปุ่มสีแดงเมื่อพลาด
+            if (buttonImage != null && failButtonSprite != null) 
+            {
+                buttonImage.sprite = failButtonSprite;
+            }
 
             if (currentPresses > targetPresses)
                 instructionText.text = "OVERLOAD! You pressed " + currentPresses + " / " + targetPresses;
