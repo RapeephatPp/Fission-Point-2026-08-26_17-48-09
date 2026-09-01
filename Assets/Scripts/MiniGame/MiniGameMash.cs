@@ -13,8 +13,12 @@ public class MiniGameMash : MonoBehaviour
     [Header("UI Elements")]
     public Image progressBar;                
 
-    [Header("Button Visual")]
-    public RectTransform buttonVisual;       
+    [Header("Button Visual & Sprites")]
+    public RectTransform buttonVisual; 
+    public Image buttonImage;            // 🟢 เพิ่มช่องสำหรับใส่ Image ของปุ่ม
+    public Sprite defaultSprite;         // 🟢 รูปปุ่มสีแดง (ตอนรัว)
+    public Sprite successSprite;         // 🟢 รูปปุ่มสีเขียว (ตอนชนะ)
+
     public float pressedScale = 0.85f;       
     public float buttonRecoverSpeed = 20f;   
 
@@ -34,6 +38,12 @@ public class MiniGameMash : MonoBehaviour
         if (buttonVisual != null)
         {
             originalButtonScale = buttonVisual.localScale;
+            
+            // ดึงคอมโพเนนต์ Image มาให้กริมอัตโนมัติ เผื่อลืมลากใส่
+            if (buttonImage == null) 
+            {
+                buttonImage = buttonVisual.GetComponent<Image>();
+            }
         }
     }
 
@@ -48,11 +58,10 @@ public class MiniGameMash : MonoBehaviour
 
     public void StartMinigame()
     {
-
         if (gameManager == null)
         {
-            Debug.LogError("�ѧ�������� Game Manager �˹�ҵ�ҧ Inspector �ͧ�Թ��� ��! ��ҡ�����д��");
-            return; // ��ش��÷ӧҹ�ѹ���������������ѧ
+            Debug.LogError("ยังไม่ได้ใส่ Game Manager ในหน้าต่าง Inspector ของมินิเกม กด! ไปลากมาใส่ซะดีๆ");
+            return; 
         }
 
         int day = gameManager.currentDay;
@@ -61,26 +70,29 @@ public class MiniGameMash : MonoBehaviour
         {
             timeLimit = 6f;
             drainRate = 0.15f;
-
         }
         else if (day >= 3 && day <= 5)
         {
             timeLimit = 5f;
             drainRate = 0.2f;
         }
-        else if (day >=6)
+        else if (day >= 6)
         {
             timeLimit = 4f;
             drainRate = 0.29f;
         }
-
-
 
         currentProgress = 0f;
         timer = timeLimit;
 
         if (progressBar != null) progressBar.fillAmount = 0f;
         if (instructionText != null) instructionText.text = "Mash the button to fill the gauge..";
+
+        // 🟢 รีเซ็ตปุ่มกลับเป็นสีแดงทุกครั้งที่เริ่มเกมใหม่[cite: 11]
+        if (buttonImage != null && defaultSprite != null)
+        {
+            buttonImage.sprite = defaultSprite;
+        }
 
         isGameActive = true;
     }
@@ -127,6 +139,12 @@ public class MiniGameMash : MonoBehaviour
         isGameActive = false;
         if (instructionText != null) instructionText.text = "Success";
         if (buttonVisual != null) buttonVisual.localScale = originalButtonScale; 
+
+        // 🟢 เปลี่ยนปุ่มเป็นสีเขียวเมื่อรัวเกจจนเต็ม[cite: 11]
+        if (buttonImage != null && successSprite != null)
+        {
+            buttonImage.sprite = successSprite;
+        }
 
         StartCoroutine(EndMinigameRoutine(true));
     }

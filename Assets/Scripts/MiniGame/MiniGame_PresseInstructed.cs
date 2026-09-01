@@ -11,27 +11,26 @@ public class MiniGame_PresseInstructed : MonoBehaviour
     public TextMeshProUGUI timerText;
     public Image timerBar;
 
-    [Header("UI Visuals & Sprites")]
-    public RectTransform buttonVisual; 
-    
-    // 🟢 เปลี่ยนจากการใช้ Color เป็นการสลับ Sprite แทน
-    [Tooltip("รูปปุ่มสถานะปกติ (ก่อนกด/กำลังเล่น)")]
-    public Sprite defaultButtonSprite; 
-    [Tooltip("รูปปุ่มเมื่อกดสำเร็จ (รูปสีเขียว)")]
-    public Sprite successButtonSprite; 
-    [Tooltip("รูปปุ่มเมื่อกดพลาด (รูปสีแดง)")]
-    public Sprite failButtonSprite;    
+    [Header("Grid UI Setup")]
+    [Tooltip("ลากปุ่มสี่เหลี่ยมเล็กๆ ทั้งหมดในแผงมาใส่เรียงตามลำดับ (0, 1, 2...)")]
+    public Image[] gridButtons; 
 
-    public float pressedScale = 0.85f;
-    public float pressDuration = 0.15f; 
+    [Header("Sprites (สลับภาพตาม Assets ใหม่)")]
+    public Sprite normalWhiteSprite;   
+    public Sprite normalYellowSprite;  
+    public Sprite glowingWhiteSprite;  
+    public Sprite glowingYellowSprite; 
+    public Sprite redFailSprite;       
 
-    private Image buttonImage; 
+    [Header("Juice")]
+    public float popDuration = 0.15f; 
+    public float popScale = 1.2f;
 
     [Header("Minigame Settings")]
     public int minRounds = 1;                 
     public int maxRounds = 5;                 
     public int minPresses = 1;                
-    public int maxPresses = 9;                
+    public int maxPresses = 20; 
     public float timePerRound;           
     public float delayBetweenRounds = 0.5f;
 
@@ -51,38 +50,9 @@ public class MiniGame_PresseInstructed : MonoBehaviour
     private float timeSinceLastPress;
     private bool isRoundActive = false;
 
-    private Vector3 originalButtonScale;
-    private Coroutine pressCoroutine;
-
-    private void Awake()
-    {
-        if (buttonVisual != null)
-        {
-            originalButtonScale = buttonVisual.localScale;
-
-            buttonImage = buttonVisual.GetComponent<Image>();
-            
-            // ถ้าไม่ได้ลากรูป Default มาใส่ ให้จดจำรูปแรกเริ่มที่ตั้งไว้ใน Image แทน
-            if (buttonImage != null && defaultButtonSprite == null)
-            {
-                defaultButtonSprite = buttonImage.sprite;
-            }
-        }
-    }
-
     private void OnEnable()
     {
-        if (buttonVisual != null)
-        {
-            buttonVisual.localScale = originalButtonScale;
-            
-            // รีเซ็ตภาพกลับเป็นปุ่มปกติทุกครั้งที่เปิดมินิเกมขึ้นมาใหม่
-            if (buttonImage != null && defaultButtonSprite != null)
-            {
-                buttonImage.sprite = defaultButtonSprite;
-                buttonImage.color = Color.white; // ล้างค่า Tint สี เผื่อเผลอไปปรับไว้
-            }
-        }
+        ResetGridVisuals();
         StartMinigame();
     }
 
@@ -90,7 +60,7 @@ public class MiniGame_PresseInstructed : MonoBehaviour
     {
         if (gameManager == null)
         {
-            Debug.LogError("ยังไม่ได้ใส่ Game Manager ในหน้าต่าง Inspector ของมินิเกม กด! ไปลากมาใส่ซะดีๆ");
+            Debug.LogError("ยังไม่ได้ใส่ Game Manager ในหน้าต่าง Inspector ของมินิเกม กด!");
             return; 
         }
 
@@ -129,11 +99,7 @@ public class MiniGame_PresseInstructed : MonoBehaviour
 
         if (timerBar != null) timerBar.fillAmount = 1f;
         
-        // รีเซ็ตรูปภาพเมื่อเริ่มรอบใหม่
-        if (buttonImage != null && defaultButtonSprite != null) 
-        {
-            buttonImage.sprite = defaultButtonSprite;
-        }
+        ResetGridVisuals(); 
 
         if (currentRound > 1 && Random.value <= sameAsLastChance)
         {
@@ -142,7 +108,8 @@ public class MiniGame_PresseInstructed : MonoBehaviour
         }
         else
         {
-            targetPresses = Random.Range(minPresses, maxPresses + 1);
+            int actualMax = Mathf.Min(maxPresses, gridButtons.Length);
+            targetPresses = Random.Range(minPresses, actualMax + 1);
             instructionText.text = "Press " + targetPresses + " Times..";
         }
 
@@ -165,14 +132,25 @@ public class MiniGame_PresseInstructed : MonoBehaviour
 
         if (Input.GetKeyDown(KeyCode.Space) || Input.GetMouseButtonDown(0))
         {
+            if (currentPresses < gridButtons.Length)
+            {
+                Image targetButton = gridButtons[currentPresses];
+                
+                // สลับแค่ Sprite อย่างเดียว ไม่ยุ่งกับขนาด
+                if (targetButton.sprite == normalWhiteSprite)
+                {
+                    targetButton.sprite = glowingWhiteSprite;
+                }
+                else if (targetButton.sprite == normalYellowSprite)
+                {
+                    targetButton.sprite = glowingYellowSprite;
+                }
+                
+                StartCoroutine(PopButtonRoutine(targetButton.rectTransform));
+            }
+
             currentPresses++;
             timeSinceLastPress = 0f;
-
-            if (buttonVisual != null)
-            {
-                if (pressCoroutine != null) StopCoroutine(pressCoroutine);
-                pressCoroutine = StartCoroutine(AnimateButtonPress());
-            }
 
             if (currentPresses > targetPresses)
             {
@@ -192,19 +170,32 @@ public class MiniGame_PresseInstructed : MonoBehaviour
         }
     }
 
-    private IEnumerator AnimateButtonPress()
+    private void ResetGridVisuals()
     {
-        buttonVisual.localScale = originalButtonScale * pressedScale; 
+        if (gridButtons == null) return;
+        
+        foreach (Image btn in gridButtons)
+        {
+            if (btn != null)
+            {
+                btn.sprite = Random.value > 0.5f ? normalWhiteSprite : normalYellowSprite;
+                btn.rectTransform.localScale = Vector3.one; 
+            }
+        }
+    }
 
+    private IEnumerator PopButtonRoutine(RectTransform btnRect)
+    {
         float elapsed = 0f;
-        while (elapsed < pressDuration)
+        while (elapsed < popDuration)
         {
             elapsed += Time.deltaTime;
-            buttonVisual.localScale = Vector3.Lerp(originalButtonScale * pressedScale, originalButtonScale, elapsed / pressDuration);
+            float t = elapsed / popDuration;
+            float currentScale = Mathf.Lerp(1f, popScale, Mathf.PingPong(t * 2f, 1f));
+            btnRect.localScale = new Vector3(currentScale, currentScale, 1f);
             yield return null;
         }
-
-        buttonVisual.localScale = originalButtonScale; 
+        btnRect.localScale = Vector3.one;
     }
 
     private void CheckRoundResult()
@@ -215,12 +206,6 @@ public class MiniGame_PresseInstructed : MonoBehaviour
 
         if (currentPresses == targetPresses)
         {
-            // 🟢 เปลี่ยนรูปเป็นปุ่มสีเขียวเมื่อสำเร็จ
-            if (buttonImage != null && successButtonSprite != null) 
-            {
-                buttonImage.sprite = successButtonSprite;
-            }
-
             if (currentRound >= totalRounds)
             {
                 instructionText.text = "Pass";
@@ -236,10 +221,9 @@ public class MiniGame_PresseInstructed : MonoBehaviour
         }
         else
         {
-            // 🟢 เปลี่ยนรูปเป็นปุ่มสีแดงเมื่อพลาด
-            if (buttonImage != null && failButtonSprite != null) 
+            for (int i = 0; i < currentPresses; i++)
             {
-                buttonImage.sprite = failButtonSprite;
+                if (i < gridButtons.Length) gridButtons[i].sprite = redFailSprite;
             }
 
             if (currentPresses > targetPresses)
