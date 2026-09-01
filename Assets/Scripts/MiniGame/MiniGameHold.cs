@@ -47,6 +47,14 @@ public class MiniGameHold : MonoBehaviour
     private float randomTimeOffset = 0f;
 
     private Vector3 originalButtonScale;
+    
+    private void Awake()
+    {
+        if (buttonVisual != null)
+        {
+            originalButtonScale = buttonVisual.localScale;
+        }
+    }
 
     private void OnEnable()
     {
@@ -59,13 +67,19 @@ public class MiniGameHold : MonoBehaviour
 
     public void StartMinigame()
     {
+        if (gameManager == null)
+        {
+            Debug.LogError("ยังไม่ได้ใส่ Game Manager ในหน้าต่าง Inspector ของมินิเกม Hold! ไปลากมาใส่ด้วย");
+            return; 
+        }
+
         int day = gameManager.currentDay;
         currentGauge = 0f;
         currentError = 0f;
         timer = surviveTime;
         isZoneMoving = false;
 
-        if (gameManager != null && day >= 3 && day <6)
+        if (day >= 3 && day < 6)
         {
             if (Random.value <= movingChance)
             {
@@ -75,14 +89,13 @@ public class MiniGameHold : MonoBehaviour
             }
         }
 
-        if (gameManager != null && day >=6)
+        if (day >= 6)
         {
-                errorPenalty = 0.3f;
-                moveSpeed = 0.5f;
-                isZoneMoving = true;               
-                randomTimeOffset = Random.Range(0f, 100f);           
+            errorPenalty = 0.3f;
+            moveSpeed = 0.5f;
+            isZoneMoving = true;               
+            randomTimeOffset = Random.Range(0f, 100f);           
         }
-
 
         if (!isZoneMoving)
         {
@@ -91,7 +104,6 @@ public class MiniGameHold : MonoBehaviour
             UpdateZoneUI();
         }
      
-
         if (instructionText != null) instructionText.text = "Hold in gauge..";
         if (playerGauge != null) playerGauge.fillAmount = 0f;
         if (errorBar != null) errorBar.fillAmount = 0f;

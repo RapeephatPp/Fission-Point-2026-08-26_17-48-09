@@ -71,6 +71,13 @@ public class MiniGame_PresseInstructed : MonoBehaviour
 
     public void StartMinigame()
     {
+        // เพิ่มตัวดักบั๊กตรงนี้
+        if (gameManager == null)
+        {
+            Debug.LogError("ยังไม่ได้ใส่ Game Manager ในหน้าต่าง Inspector ของมินิเกม กด! ไปลากมาใส่ซะดีๆ");
+            return; // หยุดการทำงานทันทีเพื่อไม่ให้เกมพัง
+        }
+
         int day = gameManager.currentDay;
 
         if (day == 1)
