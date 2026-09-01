@@ -130,6 +130,9 @@ GameObject:
   - component: {fileID: 17258271}
   - component: {fileID: 17258273}
   - component: {fileID: 17258272}
+  - component: {fileID: 17258277}
+  - component: {fileID: 17258275}
+  - component: {fileID: 17258276}
   m_Layer: 5
   m_Name: Tip Text
   m_TagString: Untagged
@@ -256,6 +259,130 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 17258270}
   m_CullTransparentMesh: 1
+--- !u!114 &17258275
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 17258270}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bb109a5bb1fa01b4daab8b126f081483, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::NewMonoBehaviourScript
+--- !u!82 &17258276
+AudioSource:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 17258270}
+  m_Enabled: 1
+  serializedVersion: 4
+  OutputAudioMixerGroup: {fileID: 0}
+  m_audioClip: {fileID: 0}
+  m_Resource: {fileID: 8300000, guid: 431d5bfd4f7d17a40b3de6cfca6663f9, type: 3}
+  m_PlayOnAwake: 1
+  m_Volume: 0.071
+  m_Pitch: 1
+  Loop: 0
+  Mute: 0
+  Spatialize: 0
+  SpatializePostEffects: 0
+  Priority: 128
+  DopplerLevel: 1
+  MinDistance: 1
+  MaxDistance: 500
+  Pan2D: 0
+  rolloffMode: 0
+  BypassEffects: 0
+  BypassListenerEffects: 0
+  BypassReverbZones: 0
+  rolloffCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    - serializedVersion: 3
+      time: 1
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  panLevelCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  spreadCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  reverbZoneMixCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+--- !u!114 &17258277
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 17258270}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a19fe8d04d55ca6409d4b51e23a92cea, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::TMPTypingSound
+  typeSound: {fileID: 0}
+  minPitch: 0.9
+  maxPitch: 1.1
 --- !u!1 &20638956
 GameObject:
   m_ObjectHideFlags: 0
@@ -452,6 +579,7 @@ GameObject:
   - component: {fileID: 38050021}
   - component: {fileID: 38050020}
   - component: {fileID: 38050019}
+  - component: {fileID: 38050022}
   m_Layer: 5
   m_Name: minibutton' (21)
   m_TagString: Untagged
@@ -516,6 +644,35 @@ RectTransform:
   m_AnchoredPosition: {x: -116.400024, y: -30}
   m_SizeDelta: {x: 96.875, y: 71.875}
   m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &38050022
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 38050018}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d0b148fe25e99eb48b9724523833bab1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.EventSystems.EventTrigger
+  m_Delegates:
+  - eventID: 2
+    callback:
+      m_PersistentCalls:
+        m_Calls:
+        - m_Target: {fileID: 1740927695}
+          m_TargetAssemblyTypeName: AudioManager, Assembly-CSharp
+          m_MethodName: PlaySFX
+          m_Mode: 5
+          m_Arguments:
+            m_ObjectArgument: {fileID: 0}
+            m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+            m_IntArgument: 0
+            m_FloatArgument: 0
+            m_StringArgument: tileClick
+            m_BoolArgument: 0
+          m_CallState: 2
 --- !u!1 &45413864
 GameObject:
   m_ObjectHideFlags: 0
@@ -527,6 +684,7 @@ GameObject:
   - component: {fileID: 45413867}
   - component: {fileID: 45413866}
   - component: {fileID: 45413865}
+  - component: {fileID: 45413868}
   m_Layer: 5
   m_Name: minibutton' (15)
   m_TagString: Untagged
@@ -591,6 +749,35 @@ RectTransform:
   m_AnchoredPosition: {x: 107.2, y: 56}
   m_SizeDelta: {x: 96.875, y: 71.875}
   m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &45413868
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 45413864}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d0b148fe25e99eb48b9724523833bab1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.EventSystems.EventTrigger
+  m_Delegates:
+  - eventID: 2
+    callback:
+      m_PersistentCalls:
+        m_Calls:
+        - m_Target: {fileID: 1740927695}
+          m_TargetAssemblyTypeName: AudioManager, Assembly-CSharp
+          m_MethodName: PlaySFX
+          m_Mode: 5
+          m_Arguments:
+            m_ObjectArgument: {fileID: 0}
+            m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+            m_IntArgument: 0
+            m_FloatArgument: 0
+            m_StringArgument: tileClick
+            m_BoolArgument: 0
+          m_CallState: 2
 --- !u!1 &65760576
 GameObject:
   m_ObjectHideFlags: 0
@@ -990,6 +1177,7 @@ GameObject:
   - component: {fileID: 173907210}
   - component: {fileID: 173907212}
   - component: {fileID: 173907211}
+  - component: {fileID: 173907214}
   m_Layer: 5
   m_Name: Dialogue Text (TMP)
   m_TagString: Untagged
@@ -1116,6 +1304,18 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 173907209}
   m_CullTransparentMesh: 1
+--- !u!114 &173907214
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 173907209}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bb109a5bb1fa01b4daab8b126f081483, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::NewMonoBehaviourScript
 --- !u!1 &218202253
 GameObject:
   m_ObjectHideFlags: 0
@@ -1264,6 +1464,7 @@ GameObject:
   - component: {fileID: 230418688}
   - component: {fileID: 230418687}
   - component: {fileID: 230418686}
+  - component: {fileID: 230418689}
   m_Layer: 5
   m_Name: minibutton' (8)
   m_TagString: Untagged
@@ -1328,6 +1529,35 @@ RectTransform:
   m_AnchoredPosition: {x: 107.2, y: 142}
   m_SizeDelta: {x: 96.875, y: 71.875}
   m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &230418689
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 230418685}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d0b148fe25e99eb48b9724523833bab1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.EventSystems.EventTrigger
+  m_Delegates:
+  - eventID: 2
+    callback:
+      m_PersistentCalls:
+        m_Calls:
+        - m_Target: {fileID: 1740927695}
+          m_TargetAssemblyTypeName: AudioManager, Assembly-CSharp
+          m_MethodName: PlaySFX
+          m_Mode: 5
+          m_Arguments:
+            m_ObjectArgument: {fileID: 0}
+            m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+            m_IntArgument: 0
+            m_FloatArgument: 0
+            m_StringArgument: tileClick
+            m_BoolArgument: 0
+          m_CallState: 2
 --- !u!1 &330711500
 GameObject:
   m_ObjectHideFlags: 0
@@ -1415,6 +1645,7 @@ GameObject:
   - component: {fileID: 332375704}
   - component: {fileID: 332375703}
   - component: {fileID: 332375702}
+  - component: {fileID: 332375705}
   m_Layer: 5
   m_Name: MiniGamePress
   m_TagString: Untagged
@@ -1574,6 +1805,19 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 332375700}
   m_CullTransparentMesh: 1
+--- !u!114 &332375705
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 332375700}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d9dff8655781a5c4b8f9b7b6a7b07f6a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MiniGameClickSound
+  soundKey: tileClick
 --- !u!1 &410855995
 GameObject:
   m_ObjectHideFlags: 0
@@ -1722,6 +1966,7 @@ GameObject:
   - component: {fileID: 424166899}
   - component: {fileID: 424166898}
   - component: {fileID: 424166897}
+  - component: {fileID: 424166900}
   m_Layer: 5
   m_Name: minibutton' (12)
   m_TagString: Untagged
@@ -1786,6 +2031,35 @@ RectTransform:
   m_AnchoredPosition: {x: 331.6, y: 142}
   m_SizeDelta: {x: 96.875, y: 71.875}
   m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &424166900
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 424166896}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d0b148fe25e99eb48b9724523833bab1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.EventSystems.EventTrigger
+  m_Delegates:
+  - eventID: 2
+    callback:
+      m_PersistentCalls:
+        m_Calls:
+        - m_Target: {fileID: 1740927695}
+          m_TargetAssemblyTypeName: AudioManager, Assembly-CSharp
+          m_MethodName: PlaySFX
+          m_Mode: 5
+          m_Arguments:
+            m_ObjectArgument: {fileID: 0}
+            m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+            m_IntArgument: 0
+            m_FloatArgument: 0
+            m_StringArgument: tileClick
+            m_BoolArgument: 0
+          m_CallState: 2
 --- !u!1 &426809434
 GameObject:
   m_ObjectHideFlags: 0
@@ -1797,6 +2071,7 @@ GameObject:
   - component: {fileID: 426809437}
   - component: {fileID: 426809436}
   - component: {fileID: 426809435}
+  - component: {fileID: 426809438}
   m_Layer: 5
   m_Name: minibutton' (20)
   m_TagString: Untagged
@@ -1861,6 +2136,35 @@ RectTransform:
   m_AnchoredPosition: {x: -340, y: -30}
   m_SizeDelta: {x: 96.875, y: 71.875}
   m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &426809438
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 426809434}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d0b148fe25e99eb48b9724523833bab1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.EventSystems.EventTrigger
+  m_Delegates:
+  - eventID: 2
+    callback:
+      m_PersistentCalls:
+        m_Calls:
+        - m_Target: {fileID: 1740927695}
+          m_TargetAssemblyTypeName: AudioManager, Assembly-CSharp
+          m_MethodName: PlaySFX
+          m_Mode: 5
+          m_Arguments:
+            m_ObjectArgument: {fileID: 0}
+            m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+            m_IntArgument: 0
+            m_FloatArgument: 0
+            m_StringArgument: tileClick
+            m_BoolArgument: 0
+          m_CallState: 2
 --- !u!1 &443355083
 GameObject:
   m_ObjectHideFlags: 0
@@ -1872,6 +2176,7 @@ GameObject:
   - component: {fileID: 443355084}
   - component: {fileID: 443355086}
   - component: {fileID: 443355085}
+  - component: {fileID: 443355087}
   m_Layer: 5
   m_Name: Botton
   m_TagString: Untagged
@@ -1936,6 +2241,19 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 443355083}
   m_CullTransparentMesh: 1
+--- !u!114 &443355087
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 443355083}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d9dff8655781a5c4b8f9b7b6a7b07f6a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MiniGameClickSound
+  soundKey: tileClick
 --- !u!1 &519420028
 GameObject:
   m_ObjectHideFlags: 0
@@ -2039,6 +2357,7 @@ GameObject:
   - component: {fileID: 520758387}
   - component: {fileID: 520758386}
   - component: {fileID: 520758385}
+  - component: {fileID: 520758388}
   m_Layer: 5
   m_Name: minibutton' (2)
   m_TagString: Untagged
@@ -2103,6 +2422,35 @@ RectTransform:
   m_AnchoredPosition: {x: -5.4, y: 227}
   m_SizeDelta: {x: 96.875, y: 71.875}
   m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &520758388
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 520758384}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d0b148fe25e99eb48b9724523833bab1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.EventSystems.EventTrigger
+  m_Delegates:
+  - eventID: 2
+    callback:
+      m_PersistentCalls:
+        m_Calls:
+        - m_Target: {fileID: 1740927695}
+          m_TargetAssemblyTypeName: AudioManager, Assembly-CSharp
+          m_MethodName: PlaySFX
+          m_Mode: 5
+          m_Arguments:
+            m_ObjectArgument: {fileID: 0}
+            m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+            m_IntArgument: 0
+            m_FloatArgument: 0
+            m_StringArgument: tileClick
+            m_BoolArgument: 0
+          m_CallState: 2
 --- !u!1 &532456012
 GameObject:
   m_ObjectHideFlags: 0
@@ -2551,6 +2899,7 @@ GameObject:
   - component: {fileID: 662316794}
   - component: {fileID: 662316793}
   - component: {fileID: 662316792}
+  - component: {fileID: 662316795}
   m_Layer: 5
   m_Name: minibutton' (14)
   m_TagString: Untagged
@@ -2615,6 +2964,35 @@ RectTransform:
   m_AnchoredPosition: {x: -116.400024, y: 56}
   m_SizeDelta: {x: 96.875, y: 71.875}
   m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &662316795
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 662316791}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d0b148fe25e99eb48b9724523833bab1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.EventSystems.EventTrigger
+  m_Delegates:
+  - eventID: 2
+    callback:
+      m_PersistentCalls:
+        m_Calls:
+        - m_Target: {fileID: 1740927695}
+          m_TargetAssemblyTypeName: AudioManager, Assembly-CSharp
+          m_MethodName: PlaySFX
+          m_Mode: 5
+          m_Arguments:
+            m_ObjectArgument: {fileID: 0}
+            m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+            m_IntArgument: 0
+            m_FloatArgument: 0
+            m_StringArgument: tileClick
+            m_BoolArgument: 0
+          m_CallState: 2
 --- !u!1 &774499350
 GameObject:
   m_ObjectHideFlags: 0
@@ -2701,6 +3079,7 @@ GameObject:
   - component: {fileID: 802894081}
   - component: {fileID: 802894080}
   - component: {fileID: 802894079}
+  - component: {fileID: 802894082}
   m_Layer: 5
   m_Name: minibutton'
   m_TagString: Untagged
@@ -2765,6 +3144,35 @@ RectTransform:
   m_AnchoredPosition: {x: -340, y: 227}
   m_SizeDelta: {x: 96.875, y: 71.875}
   m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &802894082
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 802894078}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d0b148fe25e99eb48b9724523833bab1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.EventSystems.EventTrigger
+  m_Delegates:
+  - eventID: 2
+    callback:
+      m_PersistentCalls:
+        m_Calls:
+        - m_Target: {fileID: 1740927695}
+          m_TargetAssemblyTypeName: AudioManager, Assembly-CSharp
+          m_MethodName: PlaySFX
+          m_Mode: 5
+          m_Arguments:
+            m_ObjectArgument: {fileID: 0}
+            m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+            m_IntArgument: 0
+            m_FloatArgument: 0
+            m_StringArgument: tileClick
+            m_BoolArgument: 0
+          m_CallState: 2
 --- !u!1 &811784121
 GameObject:
   m_ObjectHideFlags: 0
@@ -2851,6 +3259,7 @@ GameObject:
   - component: {fileID: 813837981}
   - component: {fileID: 813837980}
   - component: {fileID: 813837979}
+  - component: {fileID: 813837982}
   m_Layer: 5
   m_Name: minibutton' (11)
   m_TagString: Untagged
@@ -2915,6 +3324,35 @@ RectTransform:
   m_AnchoredPosition: {x: 218.19998, y: 142}
   m_SizeDelta: {x: 96.875, y: 71.875}
   m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &813837982
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 813837978}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d0b148fe25e99eb48b9724523833bab1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.EventSystems.EventTrigger
+  m_Delegates:
+  - eventID: 2
+    callback:
+      m_PersistentCalls:
+        m_Calls:
+        - m_Target: {fileID: 1740927695}
+          m_TargetAssemblyTypeName: AudioManager, Assembly-CSharp
+          m_MethodName: PlaySFX
+          m_Mode: 5
+          m_Arguments:
+            m_ObjectArgument: {fileID: 0}
+            m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+            m_IntArgument: 0
+            m_FloatArgument: 0
+            m_StringArgument: tileClick
+            m_BoolArgument: 0
+          m_CallState: 2
 --- !u!1 &906587927
 GameObject:
   m_ObjectHideFlags: 0
@@ -2926,6 +3364,7 @@ GameObject:
   - component: {fileID: 906587930}
   - component: {fileID: 906587929}
   - component: {fileID: 906587928}
+  - component: {fileID: 906587931}
   m_Layer: 5
   m_Name: minibutton'
   m_TagString: Untagged
@@ -2990,6 +3429,35 @@ RectTransform:
   m_AnchoredPosition: {x: -229, y: 227}
   m_SizeDelta: {x: 96.875, y: 71.875}
   m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &906587931
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 906587927}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d0b148fe25e99eb48b9724523833bab1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.EventSystems.EventTrigger
+  m_Delegates:
+  - eventID: 2
+    callback:
+      m_PersistentCalls:
+        m_Calls:
+        - m_Target: {fileID: 1740927695}
+          m_TargetAssemblyTypeName: AudioManager, Assembly-CSharp
+          m_MethodName: PlaySFX
+          m_Mode: 5
+          m_Arguments:
+            m_ObjectArgument: {fileID: 0}
+            m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+            m_IntArgument: 0
+            m_FloatArgument: 0
+            m_StringArgument: tileClick
+            m_BoolArgument: 0
+          m_CallState: 2
 --- !u!1 &927514295
 GameObject:
   m_ObjectHideFlags: 0
@@ -3341,6 +3809,7 @@ GameObject:
   - component: {fileID: 1018921210}
   - component: {fileID: 1018921209}
   - component: {fileID: 1018921208}
+  - component: {fileID: 1018921211}
   m_Layer: 5
   m_Name: minibutton' (6)
   m_TagString: Untagged
@@ -3405,6 +3874,35 @@ RectTransform:
   m_AnchoredPosition: {x: -340, y: 142}
   m_SizeDelta: {x: 96.875, y: 71.875}
   m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &1018921211
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1018921207}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d0b148fe25e99eb48b9724523833bab1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.EventSystems.EventTrigger
+  m_Delegates:
+  - eventID: 2
+    callback:
+      m_PersistentCalls:
+        m_Calls:
+        - m_Target: {fileID: 1740927695}
+          m_TargetAssemblyTypeName: AudioManager, Assembly-CSharp
+          m_MethodName: PlaySFX
+          m_Mode: 5
+          m_Arguments:
+            m_ObjectArgument: {fileID: 0}
+            m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+            m_IntArgument: 0
+            m_FloatArgument: 0
+            m_StringArgument: tileClick
+            m_BoolArgument: 0
+          m_CallState: 2
 --- !u!1 &1026132200
 GameObject:
   m_ObjectHideFlags: 0
@@ -3491,6 +3989,7 @@ GameObject:
   - component: {fileID: 1062573277}
   - component: {fileID: 1062573276}
   - component: {fileID: 1062573275}
+  - component: {fileID: 1062573278}
   m_Layer: 5
   m_Name: minibutton' (1)
   m_TagString: Untagged
@@ -3555,6 +4054,35 @@ RectTransform:
   m_AnchoredPosition: {x: -116.400024, y: 227}
   m_SizeDelta: {x: 96.875, y: 71.875}
   m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &1062573278
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1062573274}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d0b148fe25e99eb48b9724523833bab1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.EventSystems.EventTrigger
+  m_Delegates:
+  - eventID: 2
+    callback:
+      m_PersistentCalls:
+        m_Calls:
+        - m_Target: {fileID: 1740927695}
+          m_TargetAssemblyTypeName: AudioManager, Assembly-CSharp
+          m_MethodName: PlaySFX
+          m_Mode: 5
+          m_Arguments:
+            m_ObjectArgument: {fileID: 0}
+            m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+            m_IntArgument: 0
+            m_FloatArgument: 0
+            m_StringArgument: tileClick
+            m_BoolArgument: 0
+          m_CallState: 2
 --- !u!1 &1083288984
 GameObject:
   m_ObjectHideFlags: 0
@@ -3566,6 +4094,7 @@ GameObject:
   - component: {fileID: 1083288987}
   - component: {fileID: 1083288986}
   - component: {fileID: 1083288985}
+  - component: {fileID: 1083288988}
   m_Layer: 5
   m_Name: minibutton' (4)
   m_TagString: Untagged
@@ -3630,6 +4159,35 @@ RectTransform:
   m_AnchoredPosition: {x: 218.19998, y: 227}
   m_SizeDelta: {x: 96.875, y: 71.875}
   m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &1083288988
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1083288984}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d0b148fe25e99eb48b9724523833bab1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.EventSystems.EventTrigger
+  m_Delegates:
+  - eventID: 2
+    callback:
+      m_PersistentCalls:
+        m_Calls:
+        - m_Target: {fileID: 1740927695}
+          m_TargetAssemblyTypeName: AudioManager, Assembly-CSharp
+          m_MethodName: PlaySFX
+          m_Mode: 5
+          m_Arguments:
+            m_ObjectArgument: {fileID: 0}
+            m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+            m_IntArgument: 0
+            m_FloatArgument: 0
+            m_StringArgument: tileClick
+            m_BoolArgument: 0
+          m_CallState: 2
 --- !u!1 &1101774103
 GameObject:
   m_ObjectHideFlags: 0
@@ -4258,6 +4816,7 @@ GameObject:
   - component: {fileID: 1379577541}
   - component: {fileID: 1379577540}
   - component: {fileID: 1379577539}
+  - component: {fileID: 1379577542}
   m_Layer: 5
   m_Name: minibutton' (10)
   m_TagString: Untagged
@@ -4322,6 +4881,35 @@ RectTransform:
   m_AnchoredPosition: {x: -5.4, y: 142}
   m_SizeDelta: {x: 96.875, y: 71.875}
   m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &1379577542
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1379577538}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d0b148fe25e99eb48b9724523833bab1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.EventSystems.EventTrigger
+  m_Delegates:
+  - eventID: 2
+    callback:
+      m_PersistentCalls:
+        m_Calls:
+        - m_Target: {fileID: 1740927695}
+          m_TargetAssemblyTypeName: AudioManager, Assembly-CSharp
+          m_MethodName: PlaySFX
+          m_Mode: 5
+          m_Arguments:
+            m_ObjectArgument: {fileID: 0}
+            m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+            m_IntArgument: 0
+            m_FloatArgument: 0
+            m_StringArgument: tileClick
+            m_BoolArgument: 0
+          m_CallState: 2
 --- !u!1 &1381254900
 GameObject:
   m_ObjectHideFlags: 0
@@ -4333,6 +4921,7 @@ GameObject:
   - component: {fileID: 1381254903}
   - component: {fileID: 1381254902}
   - component: {fileID: 1381254901}
+  - component: {fileID: 1381254904}
   m_Layer: 5
   m_Name: minibutton' (5)
   m_TagString: Untagged
@@ -4397,6 +4986,35 @@ RectTransform:
   m_AnchoredPosition: {x: 331.6, y: 227}
   m_SizeDelta: {x: 96.875, y: 71.875}
   m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &1381254904
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1381254900}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d0b148fe25e99eb48b9724523833bab1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.EventSystems.EventTrigger
+  m_Delegates:
+  - eventID: 2
+    callback:
+      m_PersistentCalls:
+        m_Calls:
+        - m_Target: {fileID: 1740927695}
+          m_TargetAssemblyTypeName: AudioManager, Assembly-CSharp
+          m_MethodName: PlaySFX
+          m_Mode: 5
+          m_Arguments:
+            m_ObjectArgument: {fileID: 0}
+            m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+            m_IntArgument: 0
+            m_FloatArgument: 0
+            m_StringArgument: tileClick
+            m_BoolArgument: 0
+          m_CallState: 2
 --- !u!1 &1403578041
 GameObject:
   m_ObjectHideFlags: 0
@@ -4408,6 +5026,8 @@ GameObject:
   - component: {fileID: 1403578044}
   - component: {fileID: 1403578043}
   - component: {fileID: 1403578042}
+  - component: {fileID: 1403578046}
+  - component: {fileID: 1403578045}
   m_Layer: 5
   m_Name: Warning
   m_TagString: Untagged
@@ -4472,6 +5092,115 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 1920, y: 1080}
   m_Pivot: {x: 0.5, y: 0.5}
+--- !u!82 &1403578045
+AudioSource:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1403578041}
+  m_Enabled: 1
+  serializedVersion: 4
+  OutputAudioMixerGroup: {fileID: 0}
+  m_audioClip: {fileID: 0}
+  m_Resource: {fileID: 8300000, guid: d2d65ae73f85e7742b6710530239e08b, type: 3}
+  m_PlayOnAwake: 0
+  m_Volume: 0.647
+  m_Pitch: 1
+  Loop: 0
+  Mute: 0
+  Spatialize: 0
+  SpatializePostEffects: 0
+  Priority: 128
+  DopplerLevel: 1
+  MinDistance: 1
+  MaxDistance: 500
+  Pan2D: 0
+  rolloffMode: 0
+  BypassEffects: 0
+  BypassListenerEffects: 0
+  BypassReverbZones: 0
+  rolloffCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    - serializedVersion: 3
+      time: 1
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  panLevelCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  spreadCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  reverbZoneMixCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+--- !u!114 &1403578046
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1403578041}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bb109a5bb1fa01b4daab8b126f081483, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::NewMonoBehaviourScript
 --- !u!1 &1420362102
 GameObject:
   m_ObjectHideFlags: 0
@@ -4483,6 +5212,7 @@ GameObject:
   - component: {fileID: 1420362103}
   - component: {fileID: 1420362105}
   - component: {fileID: 1420362104}
+  - component: {fileID: 1420362106}
   m_Layer: 5
   m_Name: Botton
   m_TagString: Untagged
@@ -4547,6 +5277,19 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1420362102}
   m_CullTransparentMesh: 1
+--- !u!114 &1420362106
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1420362102}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d9dff8655781a5c4b8f9b7b6a7b07f6a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MiniGameClickSound
+  soundKey: tileClick
 --- !u!1 &1435788666
 GameObject:
   m_ObjectHideFlags: 0
@@ -4633,6 +5376,7 @@ GameObject:
   - component: {fileID: 1438972073}
   - component: {fileID: 1438972072}
   - component: {fileID: 1438972071}
+  - component: {fileID: 1438972074}
   m_Layer: 5
   m_Name: minibutton' (22)
   m_TagString: Untagged
@@ -4697,6 +5441,35 @@ RectTransform:
   m_AnchoredPosition: {x: 107.2, y: -30}
   m_SizeDelta: {x: 96.875, y: 71.875}
   m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &1438972074
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1438972070}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d0b148fe25e99eb48b9724523833bab1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.EventSystems.EventTrigger
+  m_Delegates:
+  - eventID: 2
+    callback:
+      m_PersistentCalls:
+        m_Calls:
+        - m_Target: {fileID: 1740927695}
+          m_TargetAssemblyTypeName: AudioManager, Assembly-CSharp
+          m_MethodName: PlaySFX
+          m_Mode: 5
+          m_Arguments:
+            m_ObjectArgument: {fileID: 0}
+            m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+            m_IntArgument: 0
+            m_FloatArgument: 0
+            m_StringArgument: tileClick
+            m_BoolArgument: 0
+          m_CallState: 2
 --- !u!1 &1486695982
 GameObject:
   m_ObjectHideFlags: 0
@@ -4708,6 +5481,7 @@ GameObject:
   - component: {fileID: 1486695985}
   - component: {fileID: 1486695984}
   - component: {fileID: 1486695983}
+  - component: {fileID: 1486695986}
   m_Layer: 5
   m_Name: minibutton' (26)
   m_TagString: Untagged
@@ -4772,6 +5546,35 @@ RectTransform:
   m_AnchoredPosition: {x: 331.6, y: -30}
   m_SizeDelta: {x: 96.875, y: 71.875}
   m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &1486695986
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1486695982}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d0b148fe25e99eb48b9724523833bab1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.EventSystems.EventTrigger
+  m_Delegates:
+  - eventID: 2
+    callback:
+      m_PersistentCalls:
+        m_Calls:
+        - m_Target: {fileID: 1740927695}
+          m_TargetAssemblyTypeName: AudioManager, Assembly-CSharp
+          m_MethodName: PlaySFX
+          m_Mode: 5
+          m_Arguments:
+            m_ObjectArgument: {fileID: 0}
+            m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+            m_IntArgument: 0
+            m_FloatArgument: 0
+            m_StringArgument: tileClick
+            m_BoolArgument: 0
+          m_CallState: 2
 --- !u!1 &1543171985
 GameObject:
   m_ObjectHideFlags: 0
@@ -4933,6 +5736,7 @@ GameObject:
   - component: {fileID: 1553630382}
   - component: {fileID: 1553630381}
   - component: {fileID: 1553630380}
+  - component: {fileID: 1553630383}
   m_Layer: 5
   m_Name: minibutton' (19)
   m_TagString: Untagged
@@ -4997,6 +5801,35 @@ RectTransform:
   m_AnchoredPosition: {x: 331.6, y: 56}
   m_SizeDelta: {x: 96.875, y: 71.875}
   m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &1553630383
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1553630379}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d0b148fe25e99eb48b9724523833bab1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.EventSystems.EventTrigger
+  m_Delegates:
+  - eventID: 2
+    callback:
+      m_PersistentCalls:
+        m_Calls:
+        - m_Target: {fileID: 1740927695}
+          m_TargetAssemblyTypeName: AudioManager, Assembly-CSharp
+          m_MethodName: PlaySFX
+          m_Mode: 5
+          m_Arguments:
+            m_ObjectArgument: {fileID: 0}
+            m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+            m_IntArgument: 0
+            m_FloatArgument: 0
+            m_StringArgument: tileClick
+            m_BoolArgument: 0
+          m_CallState: 2
 --- !u!1 &1559034662
 GameObject:
   m_ObjectHideFlags: 0
@@ -5171,6 +6004,7 @@ GameObject:
   - component: {fileID: 1636849634}
   - component: {fileID: 1636849633}
   - component: {fileID: 1636849632}
+  - component: {fileID: 1636849635}
   m_Layer: 5
   m_Name: minibutton' (23)
   m_TagString: Untagged
@@ -5235,6 +6069,35 @@ RectTransform:
   m_AnchoredPosition: {x: -229, y: -30}
   m_SizeDelta: {x: 96.875, y: 71.875}
   m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &1636849635
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1636849631}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d0b148fe25e99eb48b9724523833bab1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.EventSystems.EventTrigger
+  m_Delegates:
+  - eventID: 2
+    callback:
+      m_PersistentCalls:
+        m_Calls:
+        - m_Target: {fileID: 1740927695}
+          m_TargetAssemblyTypeName: AudioManager, Assembly-CSharp
+          m_MethodName: PlaySFX
+          m_Mode: 5
+          m_Arguments:
+            m_ObjectArgument: {fileID: 0}
+            m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+            m_IntArgument: 0
+            m_FloatArgument: 0
+            m_StringArgument: tileClick
+            m_BoolArgument: 0
+          m_CallState: 2
 --- !u!1 &1655303097
 GameObject:
   m_ObjectHideFlags: 0
@@ -5285,6 +6148,7 @@ GameObject:
   - component: {fileID: 1661595345}
   - component: {fileID: 1661595344}
   - component: {fileID: 1661595343}
+  - component: {fileID: 1661595346}
   m_Layer: 5
   m_Name: minibutton' (25)
   m_TagString: Untagged
@@ -5349,6 +6213,35 @@ RectTransform:
   m_AnchoredPosition: {x: 218.19998, y: -30}
   m_SizeDelta: {x: 96.875, y: 71.875}
   m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &1661595346
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1661595342}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d0b148fe25e99eb48b9724523833bab1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.EventSystems.EventTrigger
+  m_Delegates:
+  - eventID: 2
+    callback:
+      m_PersistentCalls:
+        m_Calls:
+        - m_Target: {fileID: 1740927695}
+          m_TargetAssemblyTypeName: AudioManager, Assembly-CSharp
+          m_MethodName: PlaySFX
+          m_Mode: 5
+          m_Arguments:
+            m_ObjectArgument: {fileID: 0}
+            m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+            m_IntArgument: 0
+            m_FloatArgument: 0
+            m_StringArgument: tileClick
+            m_BoolArgument: 0
+          m_CallState: 2
 --- !u!1 &1667931432
 GameObject:
   m_ObjectHideFlags: 0
@@ -5687,6 +6580,30 @@ MonoBehaviour:
   - key: gameOverSound
     clip: {fileID: 8300000, guid: c2b8c990dcacc634fac564e6bb1c748e, type: 3}
     volume: 0.377
+  - key: pump
+    clip: {fileID: 8300000, guid: 38dc6bf8f1325b84993868dad2773a05, type: 3}
+    volume: 0.377
+  - key: hold
+    clip: {fileID: 8300000, guid: ba7a519b56d13f142b5472ec907f7a86, type: 3}
+    volume: 0.377
+  - key: minigameWinSound
+    clip: {fileID: 8300000, guid: 2dcb34ae548240a4aa6828c135748c38, type: 3}
+    volume: 0.377
+  - key: minigameLoseSound
+    clip: {fileID: 8300000, guid: fb1760af84897d54285517ba3d205562, type: 3}
+    volume: 0.377
+  - key: dayChangeSound
+    clip: {fileID: 8300000, guid: 5fb8a0ccfb26f0b4ba20838b59e488d0, type: 3}
+    volume: 0.377
+  - key: event
+    clip: {fileID: 8300000, guid: d2d65ae73f85e7742b6710530239e08b, type: 3}
+    volume: 0.377
+  - key: tileClick
+    clip: {fileID: 8300000, guid: 16f7523f7023a77419538ffbeab7fbf4, type: 3}
+    volume: 1
+  - key: minigameTransitionInSound
+    clip: {fileID: 8300000, guid: 16f7523f7023a77419538ffbeab7fbf4, type: 3}
+    volume: 0.377
   loopLibrary:
   - key: ambientLoop
     clip: {fileID: 8300000, guid: 60ef98403c7870640ace0a73b6b9d061, type: 3}
@@ -6020,6 +6937,7 @@ GameObject:
   - component: {fileID: 1807647195}
   - component: {fileID: 1807647194}
   - component: {fileID: 1807647193}
+  - component: {fileID: 1807647196}
   m_Layer: 5
   m_Name: minibutton' (18)
   m_TagString: Untagged
@@ -6084,6 +7002,35 @@ RectTransform:
   m_AnchoredPosition: {x: 218.19998, y: 56}
   m_SizeDelta: {x: 96.875, y: 71.875}
   m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &1807647196
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1807647192}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d0b148fe25e99eb48b9724523833bab1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.EventSystems.EventTrigger
+  m_Delegates:
+  - eventID: 2
+    callback:
+      m_PersistentCalls:
+        m_Calls:
+        - m_Target: {fileID: 1740927695}
+          m_TargetAssemblyTypeName: AudioManager, Assembly-CSharp
+          m_MethodName: PlaySFX
+          m_Mode: 5
+          m_Arguments:
+            m_ObjectArgument: {fileID: 0}
+            m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+            m_IntArgument: 0
+            m_FloatArgument: 0
+            m_StringArgument: tileClick
+            m_BoolArgument: 0
+          m_CallState: 2
 --- !u!1 &1822692937
 GameObject:
   m_ObjectHideFlags: 0
@@ -6232,6 +7179,7 @@ GameObject:
   - component: {fileID: 1824670941}
   - component: {fileID: 1824670940}
   - component: {fileID: 1824670939}
+  - component: {fileID: 1824670942}
   m_Layer: 5
   m_Name: minibutton' (24)
   m_TagString: Untagged
@@ -6296,6 +7244,35 @@ RectTransform:
   m_AnchoredPosition: {x: -5.4, y: -30}
   m_SizeDelta: {x: 96.875, y: 71.875}
   m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &1824670942
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1824670938}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d0b148fe25e99eb48b9724523833bab1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.EventSystems.EventTrigger
+  m_Delegates:
+  - eventID: 2
+    callback:
+      m_PersistentCalls:
+        m_Calls:
+        - m_Target: {fileID: 1740927695}
+          m_TargetAssemblyTypeName: AudioManager, Assembly-CSharp
+          m_MethodName: PlaySFX
+          m_Mode: 5
+          m_Arguments:
+            m_ObjectArgument: {fileID: 0}
+            m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+            m_IntArgument: 0
+            m_FloatArgument: 0
+            m_StringArgument: tileClick
+            m_BoolArgument: 0
+          m_CallState: 2
 --- !u!1 &1867208733
 GameObject:
   m_ObjectHideFlags: 0
@@ -6307,6 +7284,7 @@ GameObject:
   - component: {fileID: 1867208736}
   - component: {fileID: 1867208735}
   - component: {fileID: 1867208734}
+  - component: {fileID: 1867208737}
   m_Layer: 5
   m_Name: minibutton' (13)
   m_TagString: Untagged
@@ -6371,6 +7349,35 @@ RectTransform:
   m_AnchoredPosition: {x: -340, y: 56}
   m_SizeDelta: {x: 96.875, y: 71.875}
   m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &1867208737
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1867208733}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d0b148fe25e99eb48b9724523833bab1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.EventSystems.EventTrigger
+  m_Delegates:
+  - eventID: 2
+    callback:
+      m_PersistentCalls:
+        m_Calls:
+        - m_Target: {fileID: 1740927695}
+          m_TargetAssemblyTypeName: AudioManager, Assembly-CSharp
+          m_MethodName: PlaySFX
+          m_Mode: 5
+          m_Arguments:
+            m_ObjectArgument: {fileID: 0}
+            m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+            m_IntArgument: 0
+            m_FloatArgument: 0
+            m_StringArgument: tileClick
+            m_BoolArgument: 0
+          m_CallState: 2
 --- !u!1 &1882673034
 GameObject:
   m_ObjectHideFlags: 0
@@ -6382,6 +7389,7 @@ GameObject:
   - component: {fileID: 1882673037}
   - component: {fileID: 1882673036}
   - component: {fileID: 1882673035}
+  - component: {fileID: 1882673038}
   m_Layer: 5
   m_Name: minibutton' (3)
   m_TagString: Untagged
@@ -6446,6 +7454,35 @@ RectTransform:
   m_AnchoredPosition: {x: 107.2, y: 227}
   m_SizeDelta: {x: 96.875, y: 71.875}
   m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &1882673038
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1882673034}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d0b148fe25e99eb48b9724523833bab1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.EventSystems.EventTrigger
+  m_Delegates:
+  - eventID: 2
+    callback:
+      m_PersistentCalls:
+        m_Calls:
+        - m_Target: {fileID: 1740927695}
+          m_TargetAssemblyTypeName: AudioManager, Assembly-CSharp
+          m_MethodName: PlaySFX
+          m_Mode: 5
+          m_Arguments:
+            m_ObjectArgument: {fileID: 0}
+            m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+            m_IntArgument: 0
+            m_FloatArgument: 0
+            m_StringArgument: tileClick
+            m_BoolArgument: 0
+          m_CallState: 2
 --- !u!1 &1886714539
 GameObject:
   m_ObjectHideFlags: 0
@@ -6607,6 +7644,7 @@ GameObject:
   - component: {fileID: 1944959198}
   - component: {fileID: 1944959197}
   - component: {fileID: 1944959196}
+  - component: {fileID: 1944959199}
   m_Layer: 5
   m_Name: minibutton' (17)
   m_TagString: Untagged
@@ -6671,6 +7709,35 @@ RectTransform:
   m_AnchoredPosition: {x: -5.4, y: 56}
   m_SizeDelta: {x: 96.875, y: 71.875}
   m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &1944959199
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1944959195}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d0b148fe25e99eb48b9724523833bab1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.EventSystems.EventTrigger
+  m_Delegates:
+  - eventID: 2
+    callback:
+      m_PersistentCalls:
+        m_Calls:
+        - m_Target: {fileID: 1740927695}
+          m_TargetAssemblyTypeName: AudioManager, Assembly-CSharp
+          m_MethodName: PlaySFX
+          m_Mode: 5
+          m_Arguments:
+            m_ObjectArgument: {fileID: 0}
+            m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+            m_IntArgument: 0
+            m_FloatArgument: 0
+            m_StringArgument: tileClick
+            m_BoolArgument: 0
+          m_CallState: 2
 --- !u!1 &1958484266
 GameObject:
   m_ObjectHideFlags: 0
@@ -6757,6 +7824,7 @@ GameObject:
   - component: {fileID: 1968492264}
   - component: {fileID: 1968492263}
   - component: {fileID: 1968492262}
+  - component: {fileID: 1968492265}
   m_Layer: 5
   m_Name: minibutton' (7)
   m_TagString: Untagged
@@ -6821,6 +7889,35 @@ RectTransform:
   m_AnchoredPosition: {x: -116.400024, y: 142}
   m_SizeDelta: {x: 96.875, y: 71.875}
   m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &1968492265
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1968492261}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d0b148fe25e99eb48b9724523833bab1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.EventSystems.EventTrigger
+  m_Delegates:
+  - eventID: 2
+    callback:
+      m_PersistentCalls:
+        m_Calls:
+        - m_Target: {fileID: 1740927695}
+          m_TargetAssemblyTypeName: AudioManager, Assembly-CSharp
+          m_MethodName: PlaySFX
+          m_Mode: 5
+          m_Arguments:
+            m_ObjectArgument: {fileID: 0}
+            m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+            m_IntArgument: 0
+            m_FloatArgument: 0
+            m_StringArgument: tileClick
+            m_BoolArgument: 0
+          m_CallState: 2
 --- !u!1 &1969683692
 GameObject:
   m_ObjectHideFlags: 0
@@ -6982,6 +8079,7 @@ GameObject:
   - component: {fileID: 2020539857}
   - component: {fileID: 2020539856}
   - component: {fileID: 2020539855}
+  - component: {fileID: 2020539858}
   m_Layer: 5
   m_Name: minibutton' (9)
   m_TagString: Untagged
@@ -7046,6 +8144,35 @@ RectTransform:
   m_AnchoredPosition: {x: -229, y: 142}
   m_SizeDelta: {x: 96.875, y: 71.875}
   m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &2020539858
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2020539854}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d0b148fe25e99eb48b9724523833bab1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.EventSystems.EventTrigger
+  m_Delegates:
+  - eventID: 2
+    callback:
+      m_PersistentCalls:
+        m_Calls:
+        - m_Target: {fileID: 1740927695}
+          m_TargetAssemblyTypeName: AudioManager, Assembly-CSharp
+          m_MethodName: PlaySFX
+          m_Mode: 5
+          m_Arguments:
+            m_ObjectArgument: {fileID: 0}
+            m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+            m_IntArgument: 0
+            m_FloatArgument: 0
+            m_StringArgument: tileClick
+            m_BoolArgument: 0
+          m_CallState: 2
 --- !u!1 &2044484098
 GameObject:
   m_ObjectHideFlags: 0
@@ -7132,6 +8259,8 @@ GameObject:
   - component: {fileID: 2053019744}
   - component: {fileID: 2053019746}
   - component: {fileID: 2053019745}
+  - component: {fileID: 2053019748}
+  - component: {fileID: 2053019747}
   m_Layer: 5
   m_Name: Notification Text (TMP)
   m_TagString: Untagged
@@ -7258,6 +8387,118 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2053019743}
   m_CullTransparentMesh: 1
+--- !u!82 &2053019747
+AudioSource:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2053019743}
+  m_Enabled: 1
+  serializedVersion: 4
+  OutputAudioMixerGroup: {fileID: 0}
+  m_audioClip: {fileID: 0}
+  m_Resource: {fileID: 8300000, guid: 431d5bfd4f7d17a40b3de6cfca6663f9, type: 3}
+  m_PlayOnAwake: 1
+  m_Volume: 0.071
+  m_Pitch: 1
+  Loop: 0
+  Mute: 0
+  Spatialize: 0
+  SpatializePostEffects: 0
+  Priority: 128
+  DopplerLevel: 1
+  MinDistance: 1
+  MaxDistance: 500
+  Pan2D: 0
+  rolloffMode: 0
+  BypassEffects: 0
+  BypassListenerEffects: 0
+  BypassReverbZones: 0
+  rolloffCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    - serializedVersion: 3
+      time: 1
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  panLevelCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  spreadCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  reverbZoneMixCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+--- !u!114 &2053019748
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2053019743}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a19fe8d04d55ca6409d4b51e23a92cea, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::TMPTypingSound
+  typeSound: {fileID: 0}
+  minPitch: 0.9
+  maxPitch: 1.1
 --- !u!1 &2131111264
 GameObject:
   m_ObjectHideFlags: 0
@@ -7406,6 +8647,7 @@ GameObject:
   - component: {fileID: 2133135449}
   - component: {fileID: 2133135448}
   - component: {fileID: 2133135447}
+  - component: {fileID: 2133135450}
   m_Layer: 5
   m_Name: minibutton' (16)
   m_TagString: Untagged
@@ -7470,6 +8712,35 @@ RectTransform:
   m_AnchoredPosition: {x: -229, y: 56}
   m_SizeDelta: {x: 96.875, y: 71.875}
   m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &2133135450
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2133135446}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d0b148fe25e99eb48b9724523833bab1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.EventSystems.EventTrigger
+  m_Delegates:
+  - eventID: 2
+    callback:
+      m_PersistentCalls:
+        m_Calls:
+        - m_Target: {fileID: 1740927695}
+          m_TargetAssemblyTypeName: AudioManager, Assembly-CSharp
+          m_MethodName: PlaySFX
+          m_Mode: 5
+          m_Arguments:
+            m_ObjectArgument: {fileID: 0}
+            m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+            m_IntArgument: 0
+            m_FloatArgument: 0
+            m_StringArgument: tileClick
+            m_BoolArgument: 0
+          m_CallState: 2
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
