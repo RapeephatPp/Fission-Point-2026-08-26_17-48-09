@@ -73,11 +73,38 @@ public class MiniGameHold : MonoBehaviour
 
     private void OnEnable()
     {
-        if (buttonVisual != null)
+        if (buttonVisual != null) buttonVisual.localScale = originalButtonScale;
+        IdleMinigame(); 
+    }
+    
+    // 🟢 อัปเดตโหมด Idle ให้เคลียร์หลอดต่างๆ ให้เป็น 0 ด้วย จะได้ดูเหมือนปิดเครื่องอยู่
+    public void IdleMinigame()
+    {
+        isGameActive = false;
+        if (instructionText != null) instructionText.text = "";
+        if (timerText != null) timerText.text = "";
+        
+        if (errorBar != null) 
         {
-            buttonVisual.localScale = originalButtonScale;
+            errorBar.fillAmount = 0f;
+            errorBar.color = Color.red;
         }
-        StartMinigame();
+        
+        // ดึงแท่งสีส้มกลับลงมาล่างสุด
+        if (playerIndicator != null)
+        {
+            playerIndicator.anchoredPosition = new Vector2(playerIndicator.anchoredPosition.x, minYPos);
+        }
+        
+        // ดึงกล่องสีฟ้ากลับลงมาล่างสุด และเปลี่ยนสีเป็นปกติ
+        if (targetZone != null)
+        {
+            targetZone.anchoredPosition = new Vector2(targetZone.anchoredPosition.x, minYPos);
+        }
+        if (targetZoneImage != null)
+        {
+            targetZoneImage.color = new Color(0.2f, 0.6f, 1f); 
+        }
     }
 
     public void StartMinigame()
@@ -138,7 +165,6 @@ public class MiniGameHold : MonoBehaviour
         timer -= Time.deltaTime;
         if (timerText != null) timerText.text = Mathf.Ceil(timer).ToString() + "s";
 
-        // ควบคุมเกจผู้เล่น
         if (Input.GetKey(KeyCode.Space) || Input.GetMouseButton(0))
         {
             currentGauge += gaugeUpSpeed * Time.deltaTime;
@@ -154,7 +180,6 @@ public class MiniGameHold : MonoBehaviour
 
         currentGauge = Mathf.Clamp01(currentGauge);
 
-        // 🟢 เลื่อนแท่งสีส้ม (Player Indicator) แบบตรงไปตรงมา ไม่ยุ่งกับ Anchor
         if (playerIndicator != null)
         {
             float visualY = Mathf.Lerp(minYPos, maxYPos, currentGauge);
@@ -163,7 +188,6 @@ public class MiniGameHold : MonoBehaviour
 
         bool isInZone = currentGauge >= targetMin && currentGauge <= targetMax;
 
-        // เปลี่ยนสีเมื่อเข้าเป้า
         if (targetZoneImage != null)
         {
             Color baseBlue = new Color(0.2f, 0.6f, 1f); 
@@ -181,7 +205,6 @@ public class MiniGameHold : MonoBehaviour
 
         currentError = Mathf.Clamp01(currentError);
 
-        // อัปเดตหลอดสีแดง
         if (errorBar != null)
         {
             errorBar.fillAmount = currentError;
@@ -211,7 +234,6 @@ public class MiniGameHold : MonoBehaviour
         targetMax = targetMin + zoneSize;
         targetCenter = targetMin + (zoneSize / 2f);
 
-        // 🟢 เลื่อนแท่งสีฟ้า (Target Zone) ตามจุด Center ไม่ยุ่งกับสเกล
         if (targetZone != null)
         {
             float targetVisualY = Mathf.Lerp(minYPos, maxYPos, targetCenter);
@@ -247,6 +269,5 @@ public class MiniGameHold : MonoBehaviour
             gameManager.FinishMinigame(isSuccess);
         }
 
-        gameObject.SetActive(false);
     }
 }

@@ -22,6 +22,11 @@ public class MiniGame_PresseInstructed : MonoBehaviour
     public Sprite glowingYellowSprite; 
     public Sprite redFailSprite;       
 
+    [Header("Sizes")]
+    // 🟢 ใส่ขนาดเล็กๆ ตามต้องการได้เลยครับ (เช่น 31, 23)
+    public Vector2 defaultSize = new Vector2(31f, 23f); 
+    public Vector2 pressedSize = new Vector2(35f, 27f); 
+
     [Header("Juice")]
     public float popDuration = 0.15f; 
     public float popScale = 1.2f;
@@ -52,8 +57,18 @@ public class MiniGame_PresseInstructed : MonoBehaviour
 
     private void OnEnable()
     {
+        // 🟢 เปลี่ยนมาเรียก Idle แทน เพื่อไม่ให้เกมเริ่มเองตอนเปิดฉาก 
+        IdleMinigame(); 
+    }
+
+    // 🟢 โหมดสแตนด์บาย ล้างข้อมูลทุกอย่างให้จอโล่ง 
+    public void IdleMinigame()
+    {
+        isRoundActive = false;
         ResetGridVisuals();
-        StartMinigame();
+        if (instructionText != null) instructionText.text = "";
+        if (timerText != null) timerText.text = "";
+        if (timerBar != null) timerBar.fillAmount = 0f;
     }
 
     public void StartMinigame()
@@ -136,7 +151,6 @@ public class MiniGame_PresseInstructed : MonoBehaviour
             {
                 Image targetButton = gridButtons[currentPresses];
                 
-                // สลับแค่ Sprite อย่างเดียว ไม่ยุ่งกับขนาด
                 if (targetButton.sprite == normalWhiteSprite)
                 {
                     targetButton.sprite = glowingWhiteSprite;
@@ -146,6 +160,8 @@ public class MiniGame_PresseInstructed : MonoBehaviour
                     targetButton.sprite = glowingYellowSprite;
                 }
                 
+                // 🟢 นำคำสั่งปรับขนาดกลับมาใช้
+                targetButton.rectTransform.sizeDelta = pressedSize;
                 StartCoroutine(PopButtonRoutine(targetButton.rectTransform));
             }
 
@@ -179,6 +195,7 @@ public class MiniGame_PresseInstructed : MonoBehaviour
             if (btn != null)
             {
                 btn.sprite = Random.value > 0.5f ? normalWhiteSprite : normalYellowSprite;
+                btn.rectTransform.sizeDelta = defaultSize; // 🟢 คืนค่าขนาดตั้งต้น
                 btn.rectTransform.localScale = Vector3.one; 
             }
         }
@@ -249,7 +266,5 @@ public class MiniGame_PresseInstructed : MonoBehaviour
         {
             gameManager.FinishMinigame(isSuccess);
         }
-
-        gameObject.SetActive(false);
     }
 }

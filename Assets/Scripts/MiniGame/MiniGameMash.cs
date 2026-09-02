@@ -49,11 +49,16 @@ public class MiniGameMash : MonoBehaviour
 
     private void OnEnable()
     {
-        if (buttonVisual != null)
-        {
-            buttonVisual.localScale = originalButtonScale;
-        }
-        StartMinigame();
+        if (buttonVisual != null) buttonVisual.localScale = originalButtonScale;
+        IdleMinigame(); // เปลี่ยนจาก StartMinigame() เป็นแบบนี้
+    }
+    
+    public void IdleMinigame()
+    {
+        isGameActive = false;
+        if (instructionText != null) instructionText.text = "";
+        if (timerText != null) timerText.text = "";
+        // เคลียร์หลอดต่างๆ ให้เป็น 0
     }
 
     public void StartMinigame()
@@ -167,7 +172,6 @@ public class MiniGameMash : MonoBehaviour
         {
             gameManager.FinishMinigame(isSuccess);
         }
-
-        gameObject.SetActive(false);
+        
     }
 }
