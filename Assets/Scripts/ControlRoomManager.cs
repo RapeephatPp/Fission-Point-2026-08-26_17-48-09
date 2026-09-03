@@ -4,16 +4,28 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 
+using UnityEngine.Rendering;
+using UnityEngine.Rendering.Universal;
+
 public class ControlRoomManager : MonoBehaviour
 {
     [Header("Debug / Cheat Mode")]
     public bool enableCheatMode = true; 
 
     [Header("Main UI Container")]
-    [Tooltip("ลาก GameObject ที่คลุมเส้นวิ่ง กล่องเป้าหมาย และปุ่มหลักทั้งหมดมาใส่ตรงนี้")]
     public RectTransform mainGameElements; 
-    [Tooltip("ระยะพิกเซลที่จะให้แผงควบคุมหลักสไลด์หลบลงไป (ติดลบคือเลื่อนลง)")]
-    public float mainGameSlideOffset = -800f; // 🟢 เพิ่มระยะสไลด์หลบ
+    public float mainGameSlideOffset = -800f; 
+
+    [Header("URP Post-Processing (Juice)")]
+    [Tooltip("ลาก GameObject ที่มีคอมโพเนนต์ Volume มาใส่ตรงนี้")]
+    public Volume globalVolume;
+    private ChromaticAberration chromaticAberration;
+    private Vignette vignette;
+    private Bloom bloom;
+    private LensDistortion lensDistortion;
+    
+    private float defaultBloomIntensity = 0f;
+    private float defaultVignetteIntensity = 0.2f;
 
     [Header("Mini-Game UI")]
     public RectTransform cursor;
@@ -89,8 +101,7 @@ public class ControlRoomManager : MonoBehaviour
     private float initialBlackoutWidth = 100f;
     private Vector3 originalShakePos;
     private Vector3 originalCursorScale;
-    
-    private Vector2 originalMainGamePos; // 🟢 เก็บตำแหน่งเดิมของแผงหลักไว้  
+    private Vector2 originalMainGamePos; 
 
     private bool isGreenSpawning = false;
     private bool isRedSpawning = false;
@@ -98,7 +109,6 @@ public class ControlRoomManager : MonoBehaviour
     private bool isBlackoutSpawning = false;
     
     private float greenTimer = 0f;
-    
     private float eventTimer = 0f;
     private float nextEventDelay = 12f; 
     private int lastEventId = -1;       
@@ -122,6 +132,17 @@ public class ControlRoomManager : MonoBehaviour
         Cursor.visible = false;
         Cursor.lockState = CursorLockMode.Locked;
 
+        if (globalVolume != null && globalVolume.profile != null)
+        {
+            globalVolume.profile.TryGet(out chromaticAberration);
+            globalVolume.profile.TryGet(out vignette);
+            globalVolume.profile.TryGet(out bloom);
+            globalVolume.profile.TryGet(out lensDistortion);
+            
+            if (bloom != null) defaultBloomIntensity = (float)bloom.intensity.value;
+            if (vignette != null) defaultVignetteIntensity = (float)vignette.intensity.value;
+        }
+
         currentSanity = maxSanity;
         timeRemaining = GetTimeForDay(currentDay); 
 
@@ -133,7 +154,6 @@ public class ControlRoomManager : MonoBehaviour
         if (shakeTarget != null) originalShakePos = shakeTarget.localPosition;
         if (cursor != null) originalCursorScale = cursor.localScale;
         
-        // 🟢 จดจำตำแหน่งเริ่มต้นของแผง UI หลัก  
         if (mainGameElements != null) originalMainGamePos = mainGameElements.anchoredPosition;
 
         if (damageFlashImage != null) { Color c = damageFlashImage.color; c.a = 0f; damageFlashImage.color = c; }
@@ -144,8 +164,6 @@ public class ControlRoomManager : MonoBehaviour
 
         if (yellowZone != null) yellowZone.sizeDelta = new Vector2(0, yellowZone.sizeDelta.y);
         if (blackoutZone != null) blackoutZone.sizeDelta = new Vector2(0, blackoutZone.sizeDelta.y);
-
-        // 🟢 ไม่ต้องสั่งปิด (SetActive false) มินิเกมแล้ว ปล่อยให้มันโชว์ค้างไว้ได้เลย  
 
         UpdateDayUI();
         UpdateSanityUI();
@@ -284,7 +302,12 @@ public class ControlRoomManager : MonoBehaviour
     {
         isGlitching = true;
         ShowEventWarning("SYSTEM GLITCH", "TIP: Cursor speed is corrupted. Rely on your reflexes!");
+        
+        if (chromaticAberration != null) chromaticAberration.intensity.value = 1f;
+
         yield return new WaitForSeconds(3.5f);
+        
+        if (chromaticAberration != null) chromaticAberration.intensity.value = 0f;
         isGlitching = false;
         cursor.localScale = originalCursorScale; 
     }
@@ -293,7 +316,25 @@ public class ControlRoomManager : MonoBehaviour
     {
         isZonesMoving = true;
         ShowEventWarning("UNSTABLE PRESSURE", "TIP: Targets are drifting. Anticipate their movement!");
-        yield return new WaitForSeconds(5.0f);
+        
+        float elapsed = 0f;
+        while (elapsed < 1f) 
+        {
+            elapsed += Time.deltaTime;
+            if (lensDistortion != null) lensDistortion.intensity.value = Mathf.Lerp(0, -0.15f, elapsed);
+            yield return null;
+        }
+
+        yield return new WaitForSeconds(4.0f);
+
+        elapsed = 0f;
+        while (elapsed < 1f) 
+        {
+            elapsed += Time.deltaTime;
+            if (lensDistortion != null) lensDistortion.intensity.value = Mathf.Lerp(-0.15f, 0, elapsed);
+            yield return null;
+        }
+
         isZonesMoving = false;
     }
 
@@ -347,6 +388,8 @@ public class ControlRoomManager : MonoBehaviour
         if (yellowZone != null) yellowZone.sizeDelta = new Vector2(0, yellowZone.sizeDelta.y);
         if (blackoutZone != null) blackoutZone.sizeDelta = new Vector2(0, blackoutZone.sizeDelta.y);
         if (eventBorderImage != null) { Color cb = eventBorderImage.color; cb.a = 0f; eventBorderImage.color = cb; }
+        if (chromaticAberration != null) chromaticAberration.intensity.value = 0f;
+        if (lensDistortion != null) lensDistortion.intensity.value = 0f;
 
         currentDay++;
         timeRemaining = GetTimeForDay(currentDay);
@@ -636,9 +679,6 @@ public class ControlRoomManager : MonoBehaviour
         CheckGameOver();
     }
 
-    // ==========================================
-    // 🟢 MINIGAME TRANSITION SYSTEM (อัปเดตสไลด์จอขึ้นลง)
-    // ==========================================
     private void EnterMinigame()
     {
         isMinigameActive = true;
@@ -654,9 +694,8 @@ public class ControlRoomManager : MonoBehaviour
     private IEnumerator SwitchToMinigameAnimation()
     {
         float elapsed = 0f;
-        float duration = 0.35f; // เพิ่มเวลาให้นุ่มนวลขึ้นนิดนึง
+        float duration = 0.35f; 
 
-        // 1. 🟢 เลื่อน Main UI สไลด์หลบลงไปด้านล่าง  
         if (mainGameElements != null)
         {
             Vector2 startPos = mainGameElements.anchoredPosition;
@@ -666,7 +705,7 @@ public class ControlRoomManager : MonoBehaviour
             {
                 elapsed += Time.unscaledDeltaTime;
                 float t = elapsed / duration;
-                t = t * t * (3f - 2f * t); // ทำให้สไลด์สมูทขึ้น (SmoothStep)
+                t = t * t * (3f - 2f * t); 
                 
                 mainGameElements.anchoredPosition = Vector2.Lerp(startPos, targetPos, t);
                 yield return null;
@@ -674,7 +713,6 @@ public class ControlRoomManager : MonoBehaviour
             mainGameElements.anchoredPosition = targetPos;
         }
 
-        // 2. 🟢 สั่งให้มินิเกมเริ่มทำงาน โดยไม่ต้องแก้ Scale ใดๆ ทั้งสิ้น  
         if (currentActiveMinigame != null)
         {
             currentActiveMinigame.BroadcastMessage("StartMinigame", SendMessageOptions.DontRequireReceiver);
@@ -693,14 +731,12 @@ public class ControlRoomManager : MonoBehaviour
 
         if (AudioManager.Instance != null) AudioManager.Instance.PlaySFX(isSuccess ? "minigameWinSound" : "minigameLoseSound");
 
-        // 1. 🟢 สั่งให้มินิเกมเข้าสู่โหมดพัก (ล้างข้อความ/หลอดต่างๆ)  
         if (currentActiveMinigame != null)
         {
             currentActiveMinigame.BroadcastMessage("IdleMinigame", SendMessageOptions.DontRequireReceiver);
             currentActiveMinigame = null;
         }
 
-        // 2. 🟢 เลื่อน Main UI สไลด์กลับขึ้นมาจุดเดิม  
         if (mainGameElements != null)
         {
             Vector2 startPos = mainGameElements.anchoredPosition;
@@ -727,8 +763,6 @@ public class ControlRoomManager : MonoBehaviour
         CheckGameOver();
         isMinigameActive = false; 
     }
-
-    // ==========================================
 
     private void CheckGameOver()
     {
@@ -865,6 +899,7 @@ public class ControlRoomManager : MonoBehaviour
         shakeTarget.localPosition = originalShakePos;
     }
 
+    // 🟢 ลบคำสั่งแฟลชแสบตาออกแล้ว 
     private IEnumerator HitPauseRoutine()
     {
         Time.timeScale = 0f; 
@@ -892,17 +927,42 @@ public class ControlRoomManager : MonoBehaviour
 
     private IEnumerator FlashDamageScreen()
     {
-        if (damageFlashImage == null) yield break;
-        Color c = damageFlashImage.color;
-        c.a = 0.5f; 
-        damageFlashImage.color = c;
+        if (vignette != null) vignette.intensity.value = 0.5f;
+
+        if (chromaticAberration != null) chromaticAberration.intensity.value = 0.8f; 
+
+        if (damageFlashImage != null) 
+        {
+            Color c = damageFlashImage.color;
+            c.a = 0.5f; 
+            damageFlashImage.color = c;
+        }
+
         float flashDuration = 0.2f;
         float elapsed = 0f;
+        
         while (elapsed < flashDuration)
         {
             elapsed += Time.unscaledDeltaTime;
-            c.a = Mathf.Lerp(0.5f, 0f, elapsed / flashDuration);
-            damageFlashImage.color = c;
+            float t = elapsed / flashDuration;
+            
+            if (damageFlashImage != null)
+            {
+                Color c = damageFlashImage.color;
+                c.a = Mathf.Lerp(0.5f, 0f, t);
+                damageFlashImage.color = c;
+            }
+            
+            if (vignette != null)
+            {
+                vignette.intensity.value = Mathf.Lerp(0.5f, defaultVignetteIntensity, t);
+            }
+            
+            if (chromaticAberration != null)
+            {
+                chromaticAberration.intensity.value = Mathf.Lerp(0.8f, 0f, t);
+            }
+            
             yield return null;
         }
     }
