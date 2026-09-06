@@ -17,13 +17,13 @@ public class MinigameRadar : MonoBehaviour
     public Image shrinkingRingImage;     
 
     [Header("Game Settings")]
-    public float timeLimit = 15f;        
-    public int requiredHits = 5;        
+    public float timeLimit ;        
+    public int requiredHits ;        
 
     [Header("Radar Settings")]
     public float startScale = 3f;        
     public float targetScale = 1f;       
-    public float tolerance = 0.2f;       // ความคลาดเคลื่อนที่ยอมรับได้ (ยิ่งน้อยยิ่งกดยาก)
+    public float tolerance = 0.2f;       
 
     public float minShrinkSpeed = 1.5f;  
     public float maxShrinkSpeed = 3.5f;  
@@ -63,6 +63,30 @@ public class MinigameRadar : MonoBehaviour
         {
             Debug.LogError("ยังไม่ได้ใส่ Game Manager ในหน้าต่าง Inspector ของมินิเกม กด! ไปลากมาใส่ซะดีๆ");
             return;
+        }
+
+        int day = gameManager.currentDay;
+
+        if (day <= 2)
+        {
+            timeLimit = 15f;
+            requiredHits = 5;
+            minShrinkSpeed = 1.5f;
+            maxShrinkSpeed = 3.5f;
+         }
+        else if (day >= 3 && day <= 5)
+        {
+            timeLimit = 12f;
+            requiredHits = 6;
+            minShrinkSpeed = 2f;
+            maxShrinkSpeed = 4f;
+        }
+        else if (day >= 6)
+        {
+            timeLimit = 10f;
+            requiredHits = 5;
+            minShrinkSpeed = 1.5f;
+            maxShrinkSpeed = 5f;
         }
         currentHits = 0;
         timer = timeLimit;
