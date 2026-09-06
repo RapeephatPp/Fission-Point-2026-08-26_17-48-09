@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
+using UnityEngine.SceneManagement;
 
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
@@ -16,16 +17,42 @@ public class ControlRoomManager : MonoBehaviour
     public RectTransform mainGameElements; 
     public float mainGameSlideOffset = -800f; 
 
-    [Header("Control Room Focus Zoom (New!)")]
-    [Tooltip("ลาก GameObject ที่คลุมภาพวาดพื้นหลังห้องควบคุมและมินิเกมทั้งหมดมาใส่ตรงนี้")]
+    [Header("Control Room Focus Zoom")]
     public RectTransform controlRoomContainer;
-    [Tooltip("อัตราการซูมขยายตอนเข้ามินิเกม (เช่น 1.5 - 1.8 เท่า)")]
     public float zoomScale = 1.6f;
-    [Tooltip("ความเร็วในการซูมเข้าและออกจากมินิเกม")]
     public float zoomDuration = 0.35f;
 
+    [Header("End Game Panels (Updated Flow!)")]
+    [Tooltip("Panel พื้นหลังดำตอน Game Over (จะค่อยๆ Fade in เข้ามาก่อน)")]
+    public GameObject gameOverPanel;
+    [Tooltip("RectTransform ของรูป Incident Report Log ที่จะพุ่งขึ้นมาหลังพื้นหลังดำ Fade เสร็จ")]
+    public RectTransform incidentReportTransform;
+    [Tooltip("Text สำหรับแสดงเนื้อหาในช่อง Description of Incident")]
+    public TextMeshProUGUI gameOverStoryText;
+    
+    [Tooltip("Panel หน้าต่างสรุปผลตอนชนะ")]
+    public GameObject winPanel;
+    [Tooltip("Text แสดงเนื้อเรื่องสรุปผลก่อนรับเช็ค")]
+    public TextMeshProUGUI winStoryText;
+    [Tooltip("RectTransform ของรูปเช็คเงินสดที่จะเด้งขึ้นมาหลังกดไปต่อ")]
+    public RectTransform winCheckTransform; 
+
+    [Header("Restart Overlay Panel (Updated!)")]
+    [Tooltip("Panel หน้าต่าง Restart ที่จะโผล่ขึ้นมาบังหน้าจอทั้งหมดเพื่อให้กดรัวๆ รีสตาร์ต")]
+    public GameObject restartPanel;
+    [Tooltip("ข้อความแจ้งเตือนสำหรับกดไปต่อ / กดรัวๆ")]
+    public TextMeshProUGUI restartPromptText;
+    [Tooltip("หลอดเกจแสดงความคืบหน้าตอนกดรัวๆ เพื่อรีสตาร์ต")]
+    public Image restartProgressBar;
+    [Tooltip("จำนวนครั้งที่ต้องกดรัวเพื่อรีสตาร์ต")]
+    public int restartMashTarget = 10;
+    public float storyTypewriterSpeed = 0.035f;
+    [Tooltip("ความเร็วในการพิมพ์ตัวอักษร Restart Text (พิมพ์ช้า)")]
+    public float restartTypewriterSpeed = 0.055f;
+    [Tooltip("ความแรงในการสั่นของตัวอักษร Restart")]
+    public float restartTextJitterIntensity = 2.5f;
+
     [Header("URP Post-Processing (Juice)")]
-    [Tooltip("ลาก GameObject ที่มีคอมโพเนนต์ Volume มาใส่ตรงนี้")]
     public Volume globalVolume;
     private ChromaticAberration chromaticAberration;
     private Vignette vignette;
@@ -110,10 +137,10 @@ public class ControlRoomManager : MonoBehaviour
     private Vector3 originalShakePos;
     private Vector3 originalCursorScale;
     private Vector2 originalMainGamePos; 
-
-    // 🟢 ตัวแปรสำหรับจดจำค่าเดิมของห้องควบคุมก่อนซูม
     private Vector2 originalContainerPos;
     private Vector3 originalContainerScale;
+    private Vector2 originalIncidentReportPos; 
+    private Vector2 originalRestartPromptPos;
 
     private bool isGreenSpawning = false;
     private bool isRedSpawning = false;
@@ -131,6 +158,18 @@ public class ControlRoomManager : MonoBehaviour
     private bool isZonesMoving = false;
     private bool isDamageFlashing = false;
 
+    // --- Tracking Stats ---
+    private int totalGreenStabilized = 0;
+    private int totalMinigamesWon = 0;
+    private int totalMinigamesFailed = 0;
+    private int totalBlackoutsFixed = 0;
+    private int totalRadiationLeaksHit = 0;
+
+    // --- End Game State ---
+    private bool isEndGameScreenActive = false;
+    private bool canMashRestart = false;
+    private int restartCurrentMash = 0;
+
     private Coroutine greenSpawnCoroutine;
     private Coroutine redSpawnCoroutine;
     private Coroutine yellowSpawnCoroutine;
@@ -142,6 +181,7 @@ public class ControlRoomManager : MonoBehaviour
     private Coroutine radiationPulseCoroutine;
     private Coroutine glitchCoroutine;
     private Coroutine movingZonesCoroutine;
+    private Coroutine restartTextShakeCoroutine;
 
     void Start()
     {
@@ -172,12 +212,27 @@ public class ControlRoomManager : MonoBehaviour
         
         if (mainGameElements != null) originalMainGamePos = mainGameElements.anchoredPosition;
 
-        // 🟢 บันทึกพิกัดและสเกลตั้งต้นของห้องควบคุม
         if (controlRoomContainer != null)
         {
             originalContainerPos = controlRoomContainer.anchoredPosition;
             originalContainerScale = controlRoomContainer.localScale;
         }
+
+        if (incidentReportTransform != null)
+        {
+            originalIncidentReportPos = incidentReportTransform.anchoredPosition;
+            incidentReportTransform.gameObject.SetActive(false);
+        }
+
+        if (restartPromptText != null)
+        {
+            originalRestartPromptPos = restartPromptText.rectTransform.anchoredPosition;
+        }
+
+        if (gameOverPanel != null) gameOverPanel.SetActive(false);
+        if (restartPanel != null) restartPanel.SetActive(false);
+        if (winPanel != null) winPanel.SetActive(false);
+        if (winCheckTransform != null) winCheckTransform.gameObject.SetActive(false);
 
         if (damageFlashImage != null) { Color c = damageFlashImage.color; c.a = 0f; damageFlashImage.color = c; }
         if (eventBorderImage != null) { Color c = eventBorderImage.color; c.a = 0f; eventBorderImage.color = c; }
@@ -204,8 +259,13 @@ public class ControlRoomManager : MonoBehaviour
 
     void Update()
     {
-        if (enableCheatMode) HandleDebugKeys();
+        if (isEndGameScreenActive)
+        {
+            HandleRestartMashing();
+            return;
+        }
 
+        if (enableCheatMode) HandleDebugKeys();
         if (!isGameActive) return;
 
         UpdateTimer();
@@ -229,6 +289,52 @@ public class ControlRoomManager : MonoBehaviour
             TriggerCursorBump(); 
             CheckHitZone();
         }
+    }
+
+    private void HandleRestartMashing()
+    {
+        if (!canMashRestart) return;
+
+        if (Input.GetKeyDown(KeyCode.Space) || Input.GetMouseButtonDown(0))
+        {
+            restartCurrentMash++;
+            if (AudioManager.Instance != null) AudioManager.Instance.PlaySFX("clickSound");
+            TriggerShake();
+
+            float progress = Mathf.Clamp01((float)restartCurrentMash / restartMashTarget);
+            if (restartProgressBar != null) restartProgressBar.fillAmount = progress;
+            if (restartPromptText != null) restartPromptText.text = $"REBOOTING CORE... [{restartCurrentMash} / {restartMashTarget}]";
+
+            if (restartCurrentMash >= restartMashTarget)
+            {
+                canMashRestart = false;
+                StartCoroutine(RestartRoutine());
+            }
+        }
+    }
+
+    private IEnumerator RestartRoutine()
+    {
+        if (restartTextShakeCoroutine != null) StopCoroutine(restartTextShakeCoroutine);
+        if (restartPromptText != null) 
+        {
+            restartPromptText.rectTransform.anchoredPosition = originalRestartPromptPos;
+            restartPromptText.text = "SYSTEM REBOOT CONFIRMED";
+        }
+
+        if (AudioManager.Instance != null) AudioManager.Instance.PlaySFX("dayChangeSound");
+
+        if (ScreenFader.Instance != null)
+        {
+            ScreenFader.Instance.fadeDuration = 1.0f;
+            yield return StartCoroutine(ScreenFader.Instance.FadeRoutine(1.0f));
+        }
+        else
+        {
+            yield return new WaitForSeconds(1.0f);
+        }
+
+        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
     }
 
     private float GetBaselineCA()
@@ -499,7 +605,6 @@ public class ControlRoomManager : MonoBehaviour
         if (vignette != null) vignette.intensity.value = GetBaselineVignette();
         if (lensDistortion != null) lensDistortion.intensity.value = 0f;
 
-        // คืนค่าตำแหน่งและสเกลของห้องควบคุมกลับสู่สภาพเดิม
         if (controlRoomContainer != null)
         {
             controlRoomContainer.anchoredPosition = originalContainerPos;
@@ -594,6 +699,7 @@ public class ControlRoomManager : MonoBehaviour
     private void OnRedZoneDisappeared()
     {
         currentSanity -= isTutorialPhase ? 1 : sanityDamage;
+        totalMinigamesFailed++;
         TriggerShake();
         StartCoroutine(FlashDamageScreen()); 
         if (AudioManager.Instance != null) AudioManager.Instance.PlaySFX("explosionSound");
@@ -751,6 +857,7 @@ public class ControlRoomManager : MonoBehaviour
             if (blackoutMashCount >= requiredBlackoutMash)
             {
                 isMashingBlackout = false;
+                totalBlackoutsFixed++;
                 StartCoroutine(FadeOutAndHideRoutine(blackoutZone, 4));
                 currentSanity += sanityHeal;
                 if (currentSanity > maxSanity) currentSanity = maxSanity;
@@ -770,6 +877,7 @@ public class ControlRoomManager : MonoBehaviour
 
         if (yellowZone != null && yellowZone.rect.width > 0 && IsInsideZone(cursorX, yellowZone, 1.0f))
         {
+            totalRadiationLeaksHit++;
             currentSanity -= sanityDamage;
             TriggerShake();
             StartCoroutine(FlashDamageScreen()); 
@@ -782,6 +890,7 @@ public class ControlRoomManager : MonoBehaviour
 
         if (IsInsideZone(cursorX, greenZone, greenHitboxMultiplier))
         {
+            totalGreenStabilized++;
             currentSanity += isTutorialPhase ? 1 : sanityHeal;
             if (currentSanity > maxSanity) currentSanity = maxSanity;
             if (isTutorialPhase) { isTutorialPhase = false; ShowNotification("SYSTEM ONLINE", "TIP: Maintain stability until the end of the shift."); }
@@ -807,9 +916,6 @@ public class ControlRoomManager : MonoBehaviour
         CheckGameOver();
     }
 
-    // ==========================================
-    // 🟢 FOCUS ZOOM TRANSITION SYSTEM (NEW!)
-    // ==========================================
     private void EnterMinigame()
     {
         isMinigameActive = true;
@@ -829,7 +935,6 @@ public class ControlRoomManager : MonoBehaviour
         float elapsed = 0f;
         float duration = zoomDuration;
 
-        // 1. คำนวณหาตำแหน่งที่ต้องเลื่อนห้องควบคุม เพื่อให้จุดมินิเกมมาอยู่กึ่งกลางจอพอดี
         Vector2 targetContainerPos = originalContainerPos;
         Vector3 targetContainerScale = originalContainerScale * zoomScale;
 
@@ -849,15 +954,13 @@ public class ControlRoomManager : MonoBehaviour
         {
             elapsed += Time.unscaledDeltaTime;
             float t = elapsed / duration;
-            t = t * t * (3f - 2f * t); // SmoothStep
+            t = t * t * (3f - 2f * t);
 
-            // เลื่อน UI หลักหลบลงล่าง
             if (mainGameElements != null)
             {
                 mainGameElements.anchoredPosition = Vector2.Lerp(startMainPos, targetMainPos, t);
             }
 
-            // 🟢 ซูมและเลื่อนห้องควบคุมพุ่งเข้าหามินิเกม
             if (controlRoomContainer != null)
             {
                 controlRoomContainer.anchoredPosition = Vector2.Lerp(startContainerPos, targetContainerPos, t);
@@ -882,6 +985,9 @@ public class ControlRoomManager : MonoBehaviour
 
     public void FinishMinigame(bool isSuccess)
     {
+        if (isSuccess) totalMinigamesWon++;
+        else totalMinigamesFailed++;
+
         StartCoroutine(SwitchBackToMainAnimation(isSuccess));
     }
 
@@ -908,13 +1014,11 @@ public class ControlRoomManager : MonoBehaviour
             float t = elapsed / duration;
             t = t * t * (3f - 2f * t);
 
-            // เลื่อน UI หลักกลับขึ้นมา[cite: 12]
             if (mainGameElements != null)
             {
                 mainGameElements.anchoredPosition = Vector2.Lerp(startMainPos, originalMainGamePos, t);
             }
 
-            // 🟢 ซูมและเลื่อนห้องควบคุมกลับมาสู่มุมมองปกติ
             if (controlRoomContainer != null)
             {
                 controlRoomContainer.anchoredPosition = Vector2.Lerp(startContainerPos, originalContainerPos, t);
@@ -944,22 +1048,252 @@ public class ControlRoomManager : MonoBehaviour
     }
 
     // ==========================================
-
+    // 🟢 GAME OVER & WIN FLOW (UPDATED TIMING & JITTER TEXT)
+    // ==========================================
     private void CheckGameOver()
     {
-        if (currentSanity <= 0)
+        if (currentSanity <= 0 && isGameActive)
         {
             isGameActive = false;
-            ShowNotification("MELTDOWN!\nSYSTEM FAILURE", "");
-            if (AudioManager.Instance != null) { AudioManager.Instance.StopAmbient(); AudioManager.Instance.PlaySFX("gameOverSound"); }
+            isEndGameScreenActive = true;
+            if (AudioManager.Instance != null) 
+            { 
+                AudioManager.Instance.StopAmbient(); 
+                AudioManager.Instance.PlaySFX("gameOverSound"); 
+            }
+            StartCoroutine(GameOverSequence());
         }
+    }
+
+    private IEnumerator GameOverSequence()
+    {
+        yield return new WaitForSeconds(0.2f);
+
+        if (mainGameElements != null) mainGameElements.gameObject.SetActive(false);
+
+        // 1. Fade-in พื้นหลังสีดำของ Game Over Panel เข้ามาก่อน
+        if (gameOverPanel != null)
+        {
+            gameOverPanel.SetActive(true);
+            CanvasGroup bgCg = gameOverPanel.GetComponent<CanvasGroup>();
+            if (bgCg == null) bgCg = gameOverPanel.AddComponent<CanvasGroup>();
+            bgCg.alpha = 0f;
+
+            float fadeDuration = 0.5f;
+            float elapsed = 0f;
+            while (elapsed < fadeDuration)
+            {
+                elapsed += Time.unscaledDeltaTime;
+                bgCg.alpha = Mathf.Lerp(0f, 1f, elapsed / fadeDuration);
+                yield return null;
+            }
+            bgCg.alpha = 1f;
+        }
+
+        yield return new WaitForSecondsRealtime(0.15f);
+
+        // 2. Incident Report Log พุ่งขึ้นมาจากขอบล่างจอ
+        if (incidentReportTransform != null)
+        {
+            incidentReportTransform.gameObject.SetActive(true);
+            Vector2 startPos = originalIncidentReportPos + new Vector2(0, -1200f);
+            incidentReportTransform.anchoredPosition = startPos;
+
+            if (AudioManager.Instance != null) AudioManager.Instance.PlaySFX("clickSound");
+
+            float slideDur = 0.45f;
+            float elapsed = 0f;
+            while (elapsed < slideDur)
+            {
+                elapsed += Time.unscaledDeltaTime;
+                float t = elapsed / slideDur;
+                t = 1f - Mathf.Pow(1f - t, 3f);
+                incidentReportTransform.anchoredPosition = Vector2.Lerp(startPos, originalIncidentReportPos, t);
+                yield return null;
+            }
+            incidentReportTransform.anchoredPosition = originalIncidentReportPos;
+            TriggerShake();
+        }
+
+        // 3. พิมพ์เนื้อหาเหตุการณ์ลงบนกระดาษ
+        string reportStory = GenerateGameOverStory();
+        if (gameOverStoryText != null)
+        {
+            yield return StartCoroutine(TypewriteStory(gameOverStoryText, reportStory, storyTypewriterSpeed));
+        }
+
+        // 🟢 4. รอผู้เล่นคลิก 1 ครั้ง หรือ รอเวลาผ่านไป 5 วินาทีก่อนเปิด Restart Panel
+        yield return StartCoroutine(WaitForClickOrTimeout(5.0f));
+
+        // 5. แสดง Restart Panel
+        yield return StartCoroutine(ShowRestartPanelRoutine());
     }
 
     private void WinGame()
     {
+        if (!isGameActive) return;
         isGameActive = false;
+        isEndGameScreenActive = true;
         timerText.text = "Time: 00";
-        ShowNotification("SURVIVED!\nSYSTEM STABILIZED", "TIP: You've mastered the reactor control.");
+
+        StartCoroutine(WinSequence());
+    }
+
+    private IEnumerator WinSequence()
+    {
+        yield return new WaitForSeconds(0.4f);
+
+        if (mainGameElements != null) mainGameElements.gameObject.SetActive(false);
+        if (winPanel != null) winPanel.SetActive(true);
+        if (winCheckTransform != null) winCheckTransform.gameObject.SetActive(false);
+
+        // 1. พิมพ์เนื้อเรื่องสรุปภารกิจ
+        string story = GenerateWinStory();
+        if (winStoryText != null)
+        {
+            yield return StartCoroutine(TypewriteStory(winStoryText, story, storyTypewriterSpeed));
+        }
+
+        if (restartPromptText != null) restartPromptText.text = "PRESS [SPACE] OR [CLICK] TO CLAIM REWARD";
+        yield return new WaitForSecondsRealtime(0.25f);
+
+        // 2. รอคลิกยืนยันเพื่อรับเช็ค
+        yield return new WaitUntil(() => Input.GetKeyDown(KeyCode.Space) || Input.GetMouseButtonDown(0));
+
+        // 3. เด้งเช็คเงินสดออกมา
+        if (winCheckTransform != null)
+        {
+            yield return StartCoroutine(PopCheckInRoutine());
+        }
+
+        // 🟢 4. รอผู้เล่นคลิก หรือ รอเวลาผ่านไป 5 วินาทีก่อนขึ้น Restart Panel
+        yield return StartCoroutine(WaitForClickOrTimeout(5.0f));
+
+        // 5. แสดง Restart Panel
+        yield return StartCoroutine(ShowRestartPanelRoutine());
+    }
+
+    // 🟢 ฟังก์ชันรอคลิก หรือหมดเวลา 5 วินาที
+    private IEnumerator WaitForClickOrTimeout(float timeoutDuration)
+    {
+        yield return new WaitForSecondsRealtime(0.2f); // ดีเลย์ป้องกันคลิกค้างเดิม
+        float timer = 0f;
+        while (timer < timeoutDuration)
+        {
+            if (Input.GetKeyDown(KeyCode.Space) || Input.GetMouseButtonDown(0))
+            {
+                yield break;
+            }
+            timer += Time.unscaledDeltaTime;
+            yield return null;
+        }
+    }
+
+    // 🟢 แสดง Restart Panel พร้อมพิมพ์ข้อความอย่างช้าๆ และสั่งให้ตัวหนังสือสั่น
+    private IEnumerator ShowRestartPanelRoutine()
+    {
+        if (restartPanel != null)
+        {
+            restartPanel.SetActive(true);
+            CanvasGroup rstCg = restartPanel.GetComponent<CanvasGroup>();
+            if (rstCg == null) rstCg = restartPanel.AddComponent<CanvasGroup>();
+
+            rstCg.alpha = 0f;
+            float rstFade = 0.35f;
+            float elapsed = 0f;
+            while (elapsed < rstFade)
+            {
+                elapsed += Time.unscaledDeltaTime;
+                rstCg.alpha = Mathf.Lerp(0f, 1f, elapsed / rstFade);
+                yield return null;
+            }
+            rstCg.alpha = 1f;
+        }
+
+        if (restartPromptText != null)
+        {
+            // เริ่มต้นแอนิเมชันตัวหนังสือสั่น
+            if (restartTextShakeCoroutine != null) StopCoroutine(restartTextShakeCoroutine);
+            restartTextShakeCoroutine = StartCoroutine(JitterTextRoutine(restartPromptText, originalRestartPromptPos, restartTextJitterIntensity));
+
+            // พิมพ์ข้อความแบบช้าๆ
+            string prompt = "MASH [SPACE] OR [CLICK] TO REBOOT";
+            yield return StartCoroutine(TypewriteStory(restartPromptText, prompt, restartTypewriterSpeed));
+        }
+
+        canMashRestart = true;
+    }
+
+    // 🟢 แอนิเมชันสั่นตัวอักษรแบบไม่หยุดยั้งจนกว่าจะจบเกม
+    private IEnumerator JitterTextRoutine(TextMeshProUGUI textElement, Vector2 originalPos, float intensity)
+    {
+        while (textElement != null && textElement.gameObject.activeInHierarchy)
+        {
+            Vector2 jitter = Random.insideUnitCircle * intensity;
+            textElement.rectTransform.anchoredPosition = originalPos + jitter;
+            yield return new WaitForSecondsRealtime(0.03f);
+        }
+        if (textElement != null) textElement.rectTransform.anchoredPosition = originalPos;
+    }
+
+    private IEnumerator PopCheckInRoutine()
+    {
+        winCheckTransform.gameObject.SetActive(true);
+        winCheckTransform.localScale = Vector3.zero;
+
+        if (AudioManager.Instance != null) AudioManager.Instance.PlaySFX("hitSound");
+
+        float duration = 0.35f;
+        float elapsed = 0f;
+
+        while (elapsed < duration)
+        {
+            elapsed += Time.unscaledDeltaTime;
+            float t = elapsed / duration;
+            float scale = Mathf.LerpUnclamped(0f, 1f, t * t * (2.70158f * t - 1.70158f) + 1f);
+            winCheckTransform.localScale = new Vector3(scale, scale, 1f);
+            yield return null;
+        }
+
+        winCheckTransform.localScale = Vector3.one;
+        TriggerShake();
+    }
+
+    private string GenerateGameOverStory()
+    {
+        return $"[INCIDENT REPORT - REACTOR FAILURE]\n\n" +
+               $"Location: Core Containment Sector\n" +
+               $"Day of Failure: Day {currentDay} / {maxDays}\n\n" +
+               $"Description:\n" +
+               $"The operator experienced acute cognitive exhaustion. " +
+               $"Core pressure calibrations failed {totalMinigamesFailed} times. " +
+               $"Radiation shielding sustained {totalRadiationLeaksHit} direct breaches. " +
+               $"Power grid collapsed following {totalBlackoutsFixed} recovered generators.\n\n" +
+               $"Conclusion: Containment breached. Reactor core lost to complete thermal meltdown.";
+    }
+
+    private string GenerateWinStory()
+    {
+        return $"[PAYROLL & VALOR COMMENDATION]\n\n" +
+               $"Seven consecutive days of core stabilization successfully completed.\n\n" +
+               $"• Pressure Cycles Kept: {totalGreenStabilized}\n" +
+               $"• Systems Repaired: {totalMinigamesWon}\n" +
+               $"• Blackouts Countered: {totalBlackoutsFixed}\n" +
+               $"• Operator Mental Reserve: {currentSanity}%\n\n" +
+               $"Containment intact. Hazard bonus wired directly from Illutio Co.";
+    }
+
+    // 🟢 รองรับการกำหนดความเร็วการพิมพ์แบบกำหนดเองได้
+    private IEnumerator TypewriteStory(TextMeshProUGUI targetText, string fullText, float speed)
+    {
+        targetText.text = fullText;
+        targetText.maxVisibleCharacters = 0;
+
+        for (int i = 0; i <= fullText.Length; i++)
+        {
+            targetText.maxVisibleCharacters = i;
+            yield return new WaitForSecondsRealtime(speed);
+        }
     }
 
     private bool IsInsideZone(float xPos, RectTransform zone, float hitboxMultiplier)
