@@ -16,6 +16,14 @@ public class ControlRoomManager : MonoBehaviour
     public RectTransform mainGameElements; 
     public float mainGameSlideOffset = -800f; 
 
+    [Header("Control Room Focus Zoom (New!)")]
+    [Tooltip("ลาก GameObject ที่คลุมภาพวาดพื้นหลังห้องควบคุมและมินิเกมทั้งหมดมาใส่ตรงนี้")]
+    public RectTransform controlRoomContainer;
+    [Tooltip("อัตราการซูมขยายตอนเข้ามินิเกม (เช่น 1.5 - 1.8 เท่า)")]
+    public float zoomScale = 1.6f;
+    [Tooltip("ความเร็วในการซูมเข้าและออกจากมินิเกม")]
+    public float zoomDuration = 0.35f;
+
     [Header("URP Post-Processing (Juice)")]
     [Tooltip("ลาก GameObject ที่มีคอมโพเนนต์ Volume มาใส่ตรงนี้")]
     public Volume globalVolume;
@@ -25,7 +33,7 @@ public class ControlRoomManager : MonoBehaviour
     private LensDistortion lensDistortion;
     
     private float defaultBloomIntensity = 0f;
-    private float defaultVignetteIntensity = 0.2f;
+    private float defaultVignetteIntensity = 0.15f;
 
     [Header("Mini-Game UI")]
     public RectTransform cursor;
@@ -103,6 +111,10 @@ public class ControlRoomManager : MonoBehaviour
     private Vector3 originalCursorScale;
     private Vector2 originalMainGamePos; 
 
+    // 🟢 ตัวแปรสำหรับจดจำค่าเดิมของห้องควบคุมก่อนซูม
+    private Vector2 originalContainerPos;
+    private Vector3 originalContainerScale;
+
     private bool isGreenSpawning = false;
     private bool isRedSpawning = false;
     private bool isYellowSpawning = false;
@@ -117,6 +129,7 @@ public class ControlRoomManager : MonoBehaviour
     private int requiredBlackoutMash = 5;
     private bool isGlitching = false;
     private bool isZonesMoving = false;
+    private bool isDamageFlashing = false;
 
     private Coroutine greenSpawnCoroutine;
     private Coroutine redSpawnCoroutine;
@@ -126,6 +139,9 @@ public class ControlRoomManager : MonoBehaviour
     private Coroutine cursorBumpCoroutine;
     private Coroutine notificationCoroutine;
     private Coroutine eventBorderCoroutine;
+    private Coroutine radiationPulseCoroutine;
+    private Coroutine glitchCoroutine;
+    private Coroutine movingZonesCoroutine;
 
     void Start()
     {
@@ -155,6 +171,13 @@ public class ControlRoomManager : MonoBehaviour
         if (cursor != null) originalCursorScale = cursor.localScale;
         
         if (mainGameElements != null) originalMainGamePos = mainGameElements.anchoredPosition;
+
+        // 🟢 บันทึกพิกัดและสเกลตั้งต้นของห้องควบคุม
+        if (controlRoomContainer != null)
+        {
+            originalContainerPos = controlRoomContainer.anchoredPosition;
+            originalContainerScale = controlRoomContainer.localScale;
+        }
 
         if (damageFlashImage != null) { Color c = damageFlashImage.color; c.a = 0f; damageFlashImage.color = c; }
         if (eventBorderImage != null) { Color c = eventBorderImage.color; c.a = 0f; eventBorderImage.color = c; }
@@ -186,6 +209,8 @@ public class ControlRoomManager : MonoBehaviour
         if (!isGameActive) return;
 
         UpdateTimer();
+        UpdateSanityPostProcessing();
+
         if (isMinigameActive) return;
 
         if (!isMashingBlackout) 
@@ -206,6 +231,36 @@ public class ControlRoomManager : MonoBehaviour
         }
     }
 
+    private float GetBaselineCA()
+    {
+        float sanityLossRatio = 1f - Mathf.Clamp01((float)currentSanity / maxSanity);
+        return Mathf.Lerp(0.1f, 0.32f, sanityLossRatio); 
+    }
+
+    private float GetBaselineVignette()
+    {
+        float sanityLossRatio = 1f - Mathf.Clamp01((float)currentSanity / maxSanity);
+        return Mathf.Lerp(defaultVignetteIntensity, defaultVignetteIntensity + 0.12f, sanityLossRatio);
+    }
+
+    private void UpdateSanityPostProcessing()
+    {
+        if (!isGlitching && !isDamageFlashing && radiationPulseCoroutine == null && chromaticAberration != null)
+        {
+            chromaticAberration.intensity.value = Mathf.MoveTowards(chromaticAberration.intensity.value, GetBaselineCA(), Time.deltaTime * 1.2f);
+        }
+
+        if (!isMashingBlackout && !isDamageFlashing && vignette != null)
+        {
+            vignette.intensity.value = Mathf.MoveTowards(vignette.intensity.value, GetBaselineVignette(), Time.deltaTime * 1.2f);
+        }
+
+        if (!isZonesMoving && !isGlitching && lensDistortion != null)
+        {
+            lensDistortion.intensity.value = Mathf.MoveTowards(lensDistortion.intensity.value, 0f, Time.deltaTime * 2.0f);
+        }
+    }
+
     private void HandleDebugKeys()
     {
         if (Input.GetKeyDown(KeyCode.F1)) { timeRemaining = 0f; }
@@ -221,7 +276,7 @@ public class ControlRoomManager : MonoBehaviour
         if (isGlitching) 
         {
             speed = Random.Range(-cursorSpeed * 0.5f, cursorSpeed * 1.5f);
-            if (Random.value > 0.8f) cursor.localScale = originalCursorScale * Random.Range(0.6f, 1.8f);
+            if (Random.value > 0.85f) cursor.localScale = originalCursorScale * Random.Range(0.85f, 1.15f);
         }
         else
         {
@@ -284,32 +339,77 @@ public class ControlRoomManager : MonoBehaviour
                 ShowEventWarning("CRITICAL: POWER FAILURE", "TIP: MASH Spacebar to restart the generator!");
                 float oldMag = shakeMagnitude; shakeMagnitude = 20f; TriggerShake(); shakeMagnitude = oldMag;
                 if (ScreenFader.Instance != null) StartCoroutine(ScreenFader.Instance.FadeRoutine(0.85f));
+                if (vignette != null) vignette.intensity.value = 0.5f;
                 break;
             case 2:
                 TriggerRespawn(yellowZone, initialYellowWidth, redZone, 3, false, false);
                 ShowEventWarning("WARNING: RADIATION LEAK", "TIP: Do NOT touch the YELLOW zone!");
+                if (radiationPulseCoroutine != null) StopCoroutine(radiationPulseCoroutine);
+                radiationPulseCoroutine = StartCoroutine(RadiationPulseRoutine());
                 break;
             case 3:
-                StartCoroutine(GlitchRoutine());
+                if (glitchCoroutine != null) StopCoroutine(glitchCoroutine);
+                glitchCoroutine = StartCoroutine(GlitchRoutine());
                 break;
             case 4:
-                StartCoroutine(MovingZonesRoutine());
+                if (movingZonesCoroutine != null) StopCoroutine(movingZonesCoroutine);
+                movingZonesCoroutine = StartCoroutine(MovingZonesRoutine());
                 break;
         }
+    }
+
+    private IEnumerator RadiationPulseRoutine()
+    {
+        while (yellowZone != null && yellowZone.rect.width > 0)
+        {
+            if (chromaticAberration != null && !isGlitching && !isDamageFlashing)
+            {
+                chromaticAberration.intensity.value = GetBaselineCA() + Mathf.PingPong(Time.time * 1.5f, 0.08f);
+            }
+            yield return null;
+        }
+        radiationPulseCoroutine = null;
     }
 
     private IEnumerator GlitchRoutine()
     {
         isGlitching = true;
         ShowEventWarning("SYSTEM GLITCH", "TIP: Cursor speed is corrupted. Rely on your reflexes!");
-        
-        if (chromaticAberration != null) chromaticAberration.intensity.value = 1f;
 
-        yield return new WaitForSeconds(3.5f);
-        
-        if (chromaticAberration != null) chromaticAberration.intensity.value = 0f;
+        float duration = 2.0f; 
+        float timer = 0f;
+        float interval = 0.08f;
+        WaitForSeconds waitInterval = new WaitForSeconds(interval);
+
+        while (timer < duration)
+        {
+            timer += interval;
+
+            if (chromaticAberration != null)
+            {
+                chromaticAberration.intensity.value = Random.Range(0.25f, 0.45f);
+            }
+            if (lensDistortion != null)
+            {
+                lensDistortion.intensity.value = Random.Range(-0.03f, 0.03f);
+            }
+            yield return waitInterval;
+        }
+
+        StopGlitchImmediately();
+    }
+
+    private void StopGlitchImmediately()
+    {
+        if (glitchCoroutine != null)
+        {
+            StopCoroutine(glitchCoroutine);
+            glitchCoroutine = null;
+        }
         isGlitching = false;
-        cursor.localScale = originalCursorScale; 
+        if (lensDistortion != null) lensDistortion.intensity.value = 0f;
+        if (chromaticAberration != null) chromaticAberration.intensity.value = GetBaselineCA();
+        if (cursor != null) cursor.localScale = originalCursorScale;
     }
 
     private IEnumerator MovingZonesRoutine()
@@ -318,24 +418,26 @@ public class ControlRoomManager : MonoBehaviour
         ShowEventWarning("UNSTABLE PRESSURE", "TIP: Targets are drifting. Anticipate their movement!");
         
         float elapsed = 0f;
-        while (elapsed < 1f) 
+        while (elapsed < 0.6f) 
         {
             elapsed += Time.deltaTime;
-            if (lensDistortion != null) lensDistortion.intensity.value = Mathf.Lerp(0, -0.15f, elapsed);
+            if (lensDistortion != null) lensDistortion.intensity.value = Mathf.Lerp(0f, -0.08f, elapsed / 0.6f);
             yield return null;
         }
 
-        yield return new WaitForSeconds(4.0f);
+        yield return new WaitForSeconds(2.5f);
 
         elapsed = 0f;
-        while (elapsed < 1f) 
+        while (elapsed < 0.6f) 
         {
             elapsed += Time.deltaTime;
-            if (lensDistortion != null) lensDistortion.intensity.value = Mathf.Lerp(-0.15f, 0, elapsed);
+            if (lensDistortion != null) lensDistortion.intensity.value = Mathf.Lerp(-0.08f, 0f, elapsed / 0.6f);
             yield return null;
         }
 
+        if (lensDistortion != null) lensDistortion.intensity.value = 0f;
         isZonesMoving = false;
+        movingZonesCoroutine = null;
     }
 
     private float GetTimeForDay(int day)
@@ -383,13 +485,26 @@ public class ControlRoomManager : MonoBehaviour
         }
 
         isMashingBlackout = false;
-        isGlitching = false;
+        StopGlitchImmediately();
+
+        if (movingZonesCoroutine != null) { StopCoroutine(movingZonesCoroutine); movingZonesCoroutine = null; }
         isZonesMoving = false;
+        if (radiationPulseCoroutine != null) { StopCoroutine(radiationPulseCoroutine); radiationPulseCoroutine = null; }
+
         if (yellowZone != null) yellowZone.sizeDelta = new Vector2(0, yellowZone.sizeDelta.y);
         if (blackoutZone != null) blackoutZone.sizeDelta = new Vector2(0, blackoutZone.sizeDelta.y);
         if (eventBorderImage != null) { Color cb = eventBorderImage.color; cb.a = 0f; eventBorderImage.color = cb; }
-        if (chromaticAberration != null) chromaticAberration.intensity.value = 0f;
+        
+        if (chromaticAberration != null) chromaticAberration.intensity.value = GetBaselineCA();
+        if (vignette != null) vignette.intensity.value = GetBaselineVignette();
         if (lensDistortion != null) lensDistortion.intensity.value = 0f;
+
+        // คืนค่าตำแหน่งและสเกลของห้องควบคุมกลับสู่สภาพเดิม
+        if (controlRoomContainer != null)
+        {
+            controlRoomContainer.anchoredPosition = originalContainerPos;
+            controlRoomContainer.localScale = originalContainerScale;
+        }
 
         currentDay++;
         timeRemaining = GetTimeForDay(currentDay);
@@ -581,8 +696,15 @@ public class ControlRoomManager : MonoBehaviour
 
     private IEnumerator FadeOutAndHideRoutine(RectTransform zone, int zoneType)
     {
-        if (zoneType == 3) isYellowSpawning = true;
-        else if (zoneType == 4) isBlackoutSpawning = true;
+        if (zoneType == 3) 
+        {
+            isYellowSpawning = true;
+            if (radiationPulseCoroutine != null) { StopCoroutine(radiationPulseCoroutine); radiationPulseCoroutine = null; }
+        }
+        else if (zoneType == 4) 
+        {
+            isBlackoutSpawning = true;
+        }
 
         CanvasGroup cg = zone.GetComponent<CanvasGroup>();
         if (cg == null) cg = zone.gameObject.AddComponent<CanvasGroup>();
@@ -618,7 +740,13 @@ public class ControlRoomManager : MonoBehaviour
         if (isMashingBlackout)
         {
             blackoutMashCount++;
-            if (ScreenFader.Instance != null) StartCoroutine(ScreenFader.Instance.FadeRoutine(0.85f - (0.85f * (blackoutMashCount / (float)requiredBlackoutMash))));
+            float mashProgress = (float)blackoutMashCount / requiredBlackoutMash;
+            
+            if (ScreenFader.Instance != null) 
+                StartCoroutine(ScreenFader.Instance.FadeRoutine(0.85f - (0.85f * mashProgress)));
+            
+            if (vignette != null)
+                vignette.intensity.value = Mathf.Lerp(0.5f, GetBaselineVignette(), mashProgress);
             
             if (blackoutMashCount >= requiredBlackoutMash)
             {
@@ -679,9 +807,14 @@ public class ControlRoomManager : MonoBehaviour
         CheckGameOver();
     }
 
+    // ==========================================
+    // 🟢 FOCUS ZOOM TRANSITION SYSTEM (NEW!)
+    // ==========================================
     private void EnterMinigame()
     {
         isMinigameActive = true;
+        StopGlitchImmediately();
+
         if (AudioManager.Instance != null) AudioManager.Instance.PlaySFX("minigameTransitionInSound");
 
         if (minigamePanels != null && minigamePanels.Length > 0)
@@ -694,23 +827,51 @@ public class ControlRoomManager : MonoBehaviour
     private IEnumerator SwitchToMinigameAnimation()
     {
         float elapsed = 0f;
-        float duration = 0.35f; 
+        float duration = zoomDuration;
 
-        if (mainGameElements != null)
+        // 1. คำนวณหาตำแหน่งที่ต้องเลื่อนห้องควบคุม เพื่อให้จุดมินิเกมมาอยู่กึ่งกลางจอพอดี
+        Vector2 targetContainerPos = originalContainerPos;
+        Vector3 targetContainerScale = originalContainerScale * zoomScale;
+
+        if (controlRoomContainer != null && currentActiveMinigame != null)
         {
-            Vector2 startPos = mainGameElements.anchoredPosition;
-            Vector2 targetPos = originalMainGamePos + new Vector2(0, mainGameSlideOffset);
-            
-            while (elapsed < duration)
+            Vector3 targetLocalPos = controlRoomContainer.InverseTransformPoint(currentActiveMinigame.transform.position);
+            targetContainerPos = originalContainerPos - (Vector2)targetLocalPos * zoomScale;
+        }
+
+        Vector2 startMainPos = mainGameElements != null ? mainGameElements.anchoredPosition : Vector2.zero;
+        Vector2 targetMainPos = originalMainGamePos + new Vector2(0, mainGameSlideOffset);
+
+        Vector2 startContainerPos = controlRoomContainer != null ? controlRoomContainer.anchoredPosition : Vector2.zero;
+        Vector3 startContainerScale = controlRoomContainer != null ? controlRoomContainer.localScale : Vector3.one;
+
+        while (elapsed < duration)
+        {
+            elapsed += Time.unscaledDeltaTime;
+            float t = elapsed / duration;
+            t = t * t * (3f - 2f * t); // SmoothStep
+
+            // เลื่อน UI หลักหลบลงล่าง
+            if (mainGameElements != null)
             {
-                elapsed += Time.unscaledDeltaTime;
-                float t = elapsed / duration;
-                t = t * t * (3f - 2f * t); 
-                
-                mainGameElements.anchoredPosition = Vector2.Lerp(startPos, targetPos, t);
-                yield return null;
+                mainGameElements.anchoredPosition = Vector2.Lerp(startMainPos, targetMainPos, t);
             }
-            mainGameElements.anchoredPosition = targetPos;
+
+            // 🟢 ซูมและเลื่อนห้องควบคุมพุ่งเข้าหามินิเกม
+            if (controlRoomContainer != null)
+            {
+                controlRoomContainer.anchoredPosition = Vector2.Lerp(startContainerPos, targetContainerPos, t);
+                controlRoomContainer.localScale = Vector3.Lerp(startContainerScale, targetContainerScale, t);
+            }
+
+            yield return null;
+        }
+
+        if (mainGameElements != null) mainGameElements.anchoredPosition = targetMainPos;
+        if (controlRoomContainer != null)
+        {
+            controlRoomContainer.anchoredPosition = targetContainerPos;
+            controlRoomContainer.localScale = targetContainerScale;
         }
 
         if (currentActiveMinigame != null)
@@ -727,7 +888,7 @@ public class ControlRoomManager : MonoBehaviour
     private IEnumerator SwitchBackToMainAnimation(bool isSuccess)
     {
         float elapsed = 0f;
-        float duration = 0.35f;
+        float duration = zoomDuration;
 
         if (AudioManager.Instance != null) AudioManager.Instance.PlaySFX(isSuccess ? "minigameWinSound" : "minigameLoseSound");
 
@@ -737,19 +898,37 @@ public class ControlRoomManager : MonoBehaviour
             currentActiveMinigame = null;
         }
 
-        if (mainGameElements != null)
+        Vector2 startMainPos = mainGameElements != null ? mainGameElements.anchoredPosition : Vector2.zero;
+        Vector2 startContainerPos = controlRoomContainer != null ? controlRoomContainer.anchoredPosition : Vector2.zero;
+        Vector3 startContainerScale = controlRoomContainer != null ? controlRoomContainer.localScale : Vector3.one;
+
+        while (elapsed < duration)
         {
-            Vector2 startPos = mainGameElements.anchoredPosition;
-            
-            while (elapsed < duration)
+            elapsed += Time.unscaledDeltaTime;
+            float t = elapsed / duration;
+            t = t * t * (3f - 2f * t);
+
+            // เลื่อน UI หลักกลับขึ้นมา[cite: 12]
+            if (mainGameElements != null)
             {
-                elapsed += Time.unscaledDeltaTime;
-                float t = elapsed / duration;
-                t = t * t * (3f - 2f * t);
-                mainGameElements.anchoredPosition = Vector2.Lerp(startPos, originalMainGamePos, t);
-                yield return null;
+                mainGameElements.anchoredPosition = Vector2.Lerp(startMainPos, originalMainGamePos, t);
             }
-            mainGameElements.anchoredPosition = originalMainGamePos;
+
+            // 🟢 ซูมและเลื่อนห้องควบคุมกลับมาสู่มุมมองปกติ
+            if (controlRoomContainer != null)
+            {
+                controlRoomContainer.anchoredPosition = Vector2.Lerp(startContainerPos, originalContainerPos, t);
+                controlRoomContainer.localScale = Vector3.Lerp(startContainerScale, originalContainerScale, t);
+            }
+
+            yield return null;
+        }
+
+        if (mainGameElements != null) mainGameElements.anchoredPosition = originalMainGamePos;
+        if (controlRoomContainer != null)
+        {
+            controlRoomContainer.anchoredPosition = originalContainerPos;
+            controlRoomContainer.localScale = originalContainerScale;
         }
 
         if (!isSuccess)
@@ -763,6 +942,8 @@ public class ControlRoomManager : MonoBehaviour
         CheckGameOver();
         isMinigameActive = false; 
     }
+
+    // ==========================================
 
     private void CheckGameOver()
     {
@@ -899,7 +1080,6 @@ public class ControlRoomManager : MonoBehaviour
         shakeTarget.localPosition = originalShakePos;
     }
 
-    // 🟢 ลบคำสั่งแฟลชแสบตาออกแล้ว 
     private IEnumerator HitPauseRoutine()
     {
         Time.timeScale = 0f; 
@@ -927,14 +1107,18 @@ public class ControlRoomManager : MonoBehaviour
 
     private IEnumerator FlashDamageScreen()
     {
-        if (vignette != null) vignette.intensity.value = 0.5f;
+        isDamageFlashing = true;
 
-        if (chromaticAberration != null) chromaticAberration.intensity.value = 0.8f; 
+        float targetBaseCA = GetBaselineCA();
+        float targetBaseVig = GetBaselineVignette();
+
+        if (vignette != null) vignette.intensity.value = Mathf.Max(targetBaseVig + 0.12f, 0.35f);
+        if (chromaticAberration != null) chromaticAberration.intensity.value = Mathf.Max(targetBaseCA + 0.15f, 0.4f);
 
         if (damageFlashImage != null) 
         {
             Color c = damageFlashImage.color;
-            c.a = 0.5f; 
+            c.a = 0.35f; 
             damageFlashImage.color = c;
         }
 
@@ -949,21 +1133,23 @@ public class ControlRoomManager : MonoBehaviour
             if (damageFlashImage != null)
             {
                 Color c = damageFlashImage.color;
-                c.a = Mathf.Lerp(0.5f, 0f, t);
+                c.a = Mathf.Lerp(0.35f, 0f, t);
                 damageFlashImage.color = c;
             }
             
             if (vignette != null)
             {
-                vignette.intensity.value = Mathf.Lerp(0.5f, defaultVignetteIntensity, t);
+                vignette.intensity.value = Mathf.Lerp(Mathf.Max(targetBaseVig + 0.12f, 0.35f), targetBaseVig, t);
             }
             
             if (chromaticAberration != null)
             {
-                chromaticAberration.intensity.value = Mathf.Lerp(0.8f, 0f, t);
+                chromaticAberration.intensity.value = Mathf.Lerp(Mathf.Max(targetBaseCA + 0.15f, 0.4f), targetBaseCA, t);
             }
             
             yield return null;
         }
+
+        isDamageFlashing = false;
     }
 }
