@@ -23,33 +23,21 @@ public class ControlRoomManager : MonoBehaviour
     public float zoomDuration = 0.35f;
 
     [Header("End Game Panels (Updated Flow!)")]
-    [Tooltip("Panel พื้นหลังดำตอน Game Over (จะค่อยๆ Fade in เข้ามาก่อน)")]
     public GameObject gameOverPanel;
-    [Tooltip("RectTransform ของรูป Incident Report Log ที่จะพุ่งขึ้นมาหลังพื้นหลังดำ Fade เสร็จ")]
     public RectTransform incidentReportTransform;
-    [Tooltip("Text สำหรับแสดงเนื้อหาในช่อง Description of Incident")]
     public TextMeshProUGUI gameOverStoryText;
     
-    [Tooltip("Panel หน้าต่างสรุปผลตอนชนะ")]
     public GameObject winPanel;
-    [Tooltip("Text แสดงเนื้อเรื่องสรุปผลก่อนรับเช็ค")]
     public TextMeshProUGUI winStoryText;
-    [Tooltip("RectTransform ของรูปเช็คเงินสดที่จะเด้งขึ้นมาหลังกดไปต่อ")]
     public RectTransform winCheckTransform; 
 
     [Header("Restart Overlay Panel (Updated!)")]
-    [Tooltip("Panel หน้าต่าง Restart ที่จะโผล่ขึ้นมาบังหน้าจอทั้งหมดเพื่อให้กดรัวๆ รีสตาร์ต")]
     public GameObject restartPanel;
-    [Tooltip("ข้อความแจ้งเตือนสำหรับกดไปต่อ / กดรัวๆ")]
     public TextMeshProUGUI restartPromptText;
-    [Tooltip("หลอดเกจแสดงความคืบหน้าตอนกดรัวๆ เพื่อรีสตาร์ต")]
     public Image restartProgressBar;
-    [Tooltip("จำนวนครั้งที่ต้องกดรัวเพื่อรีสตาร์ต")]
     public int restartMashTarget = 10;
     public float storyTypewriterSpeed = 0.035f;
-    [Tooltip("ความเร็วในการพิมพ์ตัวอักษร Restart Text (พิมพ์ช้า)")]
     public float restartTypewriterSpeed = 0.055f;
-    [Tooltip("ความแรงในการสั่นของตัวอักษร Restart")]
     public float restartTextJitterIntensity = 2.5f;
 
     [Header("URP Post-Processing (Juice)")]
@@ -71,6 +59,13 @@ public class ControlRoomManager : MonoBehaviour
     public RectTransform yellowZone;   
     public RectTransform blackoutZone; 
     public Image eventBorderImage;     
+
+    // 🟢 ตัวแปรสำหรับปรับแสง HDR วาบๆ ของโซนสีเหลือง
+    [Header("Radiation HDR Glow Settings (New!)")]
+    [Tooltip("ระดับความสว่างวาบสูงสุดของสีเหลืองแบบ HDR (แนะนำ 2.5 - 4.0 เพื่อให้ทะลุค่า Bloom Threshold)")]
+    public float yellowGlowIntensity = 3.2f;
+    [Tooltip("ความเร็วในการกระพริบสว่างวาบของแสงรังสี")]
+    public float yellowPulseSpeed = 4.5f;
 
     [Header("Game Info UI")]
     public TextMeshProUGUI timerText;
@@ -142,6 +137,10 @@ public class ControlRoomManager : MonoBehaviour
     private Vector2 originalIncidentReportPos; 
     private Vector2 originalRestartPromptPos;
 
+    // 🟢 เก็บตัวแปร Image และสีดั้งเดิมของโซนสีเหลือง
+    private Image yellowZoneImage;
+    private Color originalYellowColor = Color.yellow;
+
     private bool isGreenSpawning = false;
     private bool isRedSpawning = false;
     private bool isYellowSpawning = false;
@@ -204,7 +203,12 @@ public class ControlRoomManager : MonoBehaviour
 
         initialGreenWidth = greenZone.rect.width;
         initialRedWidth = redZone.rect.width;
-        if (yellowZone != null) initialYellowWidth = yellowZone.rect.width;
+        if (yellowZone != null) 
+        {
+            initialYellowWidth = yellowZone.rect.width;
+            yellowZoneImage = yellowZone.GetComponent<Image>();
+            if (yellowZoneImage != null) originalYellowColor = yellowZoneImage.color;
+        }
         if (blackoutZone != null) initialBlackoutWidth = blackoutZone.rect.width;
 
         if (shakeTarget != null) originalShakePos = shakeTarget.localPosition;
@@ -464,15 +468,42 @@ public class ControlRoomManager : MonoBehaviour
         }
     }
 
+    // 🟢 รังสีรั่ว: สั่งกระพริบแสง HDR บน Yellow Zone ให้เรืองแสงสว่างวาบๆ ทะลุ Bloom
     private IEnumerator RadiationPulseRoutine()
     {
+        if (yellowZoneImage == null && yellowZone != null)
+            yellowZoneImage = yellowZone.GetComponent<Image>();
+
         while (yellowZone != null && yellowZone.rect.width > 0)
         {
+            // กระตุก Chromatic Aberration เบาๆ
             if (chromaticAberration != null && !isGlitching && !isDamageFlashing)
             {
                 chromaticAberration.intensity.value = GetBaselineCA() + Mathf.PingPong(Time.time * 1.5f, 0.08f);
             }
+
+            // 🟢 คำนวณคลื่นเร่งแสง HDR Pulse
+            if (yellowZoneImage != null)
+            {
+                float wave = Mathf.PingPong(Time.time * yellowPulseSpeed, 1f);
+                // ไล่ระดับความสว่างจาก 1.0 (ปกติ) ไปจนถึง yellowGlowIntensity (HDR สว่างจ้า)
+                float currentIntensity = Mathf.Lerp(1.0f, yellowGlowIntensity, wave);
+
+                yellowZoneImage.color = new Color(
+                    originalYellowColor.r * currentIntensity,
+                    originalYellowColor.g * currentIntensity,
+                    originalYellowColor.b * currentIntensity,
+                    originalYellowColor.a
+                );
+            }
+
             yield return null;
+        }
+
+        // คืนค่าสีเดิม
+        if (yellowZoneImage != null)
+        {
+            yellowZoneImage.color = originalYellowColor;
         }
         radiationPulseCoroutine = null;
     }
@@ -597,6 +628,7 @@ public class ControlRoomManager : MonoBehaviour
         isZonesMoving = false;
         if (radiationPulseCoroutine != null) { StopCoroutine(radiationPulseCoroutine); radiationPulseCoroutine = null; }
 
+        if (yellowZoneImage != null) yellowZoneImage.color = originalYellowColor;
         if (yellowZone != null) yellowZone.sizeDelta = new Vector2(0, yellowZone.sizeDelta.y);
         if (blackoutZone != null) blackoutZone.sizeDelta = new Vector2(0, blackoutZone.sizeDelta.y);
         if (eventBorderImage != null) { Color cb = eventBorderImage.color; cb.a = 0f; eventBorderImage.color = cb; }
@@ -806,6 +838,7 @@ public class ControlRoomManager : MonoBehaviour
         {
             isYellowSpawning = true;
             if (radiationPulseCoroutine != null) { StopCoroutine(radiationPulseCoroutine); radiationPulseCoroutine = null; }
+            if (yellowZoneImage != null) yellowZoneImage.color = originalYellowColor;
         }
         else if (zoneType == 4) 
         {
@@ -1047,9 +1080,6 @@ public class ControlRoomManager : MonoBehaviour
         isMinigameActive = false; 
     }
 
-    // ==========================================
-    // 🟢 GAME OVER & WIN FLOW (UPDATED TIMING & JITTER TEXT)
-    // ==========================================
     private void CheckGameOver()
     {
         if (currentSanity <= 0 && isGameActive)
@@ -1071,7 +1101,6 @@ public class ControlRoomManager : MonoBehaviour
 
         if (mainGameElements != null) mainGameElements.gameObject.SetActive(false);
 
-        // 1. Fade-in พื้นหลังสีดำของ Game Over Panel เข้ามาก่อน
         if (gameOverPanel != null)
         {
             gameOverPanel.SetActive(true);
@@ -1092,7 +1121,6 @@ public class ControlRoomManager : MonoBehaviour
 
         yield return new WaitForSecondsRealtime(0.15f);
 
-        // 2. Incident Report Log พุ่งขึ้นมาจากขอบล่างจอ
         if (incidentReportTransform != null)
         {
             incidentReportTransform.gameObject.SetActive(true);
@@ -1115,17 +1143,13 @@ public class ControlRoomManager : MonoBehaviour
             TriggerShake();
         }
 
-        // 3. พิมพ์เนื้อหาเหตุการณ์ลงบนกระดาษ
         string reportStory = GenerateGameOverStory();
         if (gameOverStoryText != null)
         {
             yield return StartCoroutine(TypewriteStory(gameOverStoryText, reportStory, storyTypewriterSpeed));
         }
 
-        // 🟢 4. รอผู้เล่นคลิก 1 ครั้ง หรือ รอเวลาผ่านไป 5 วินาทีก่อนเปิด Restart Panel
         yield return StartCoroutine(WaitForClickOrTimeout(5.0f));
-
-        // 5. แสดง Restart Panel
         yield return StartCoroutine(ShowRestartPanelRoutine());
     }
 
@@ -1147,7 +1171,6 @@ public class ControlRoomManager : MonoBehaviour
         if (winPanel != null) winPanel.SetActive(true);
         if (winCheckTransform != null) winCheckTransform.gameObject.SetActive(false);
 
-        // 1. พิมพ์เนื้อเรื่องสรุปภารกิจ
         string story = GenerateWinStory();
         if (winStoryText != null)
         {
@@ -1157,26 +1180,20 @@ public class ControlRoomManager : MonoBehaviour
         if (restartPromptText != null) restartPromptText.text = "PRESS [SPACE] OR [CLICK] TO CLAIM REWARD";
         yield return new WaitForSecondsRealtime(0.25f);
 
-        // 2. รอคลิกยืนยันเพื่อรับเช็ค
         yield return new WaitUntil(() => Input.GetKeyDown(KeyCode.Space) || Input.GetMouseButtonDown(0));
 
-        // 3. เด้งเช็คเงินสดออกมา
         if (winCheckTransform != null)
         {
             yield return StartCoroutine(PopCheckInRoutine());
         }
 
-        // 🟢 4. รอผู้เล่นคลิก หรือ รอเวลาผ่านไป 5 วินาทีก่อนขึ้น Restart Panel
         yield return StartCoroutine(WaitForClickOrTimeout(5.0f));
-
-        // 5. แสดง Restart Panel
         yield return StartCoroutine(ShowRestartPanelRoutine());
     }
 
-    // 🟢 ฟังก์ชันรอคลิก หรือหมดเวลา 5 วินาที
     private IEnumerator WaitForClickOrTimeout(float timeoutDuration)
     {
-        yield return new WaitForSecondsRealtime(0.2f); // ดีเลย์ป้องกันคลิกค้างเดิม
+        yield return new WaitForSecondsRealtime(0.2f); 
         float timer = 0f;
         while (timer < timeoutDuration)
         {
@@ -1189,7 +1206,6 @@ public class ControlRoomManager : MonoBehaviour
         }
     }
 
-    // 🟢 แสดง Restart Panel พร้อมพิมพ์ข้อความอย่างช้าๆ และสั่งให้ตัวหนังสือสั่น
     private IEnumerator ShowRestartPanelRoutine()
     {
         if (restartPanel != null)
@@ -1212,11 +1228,9 @@ public class ControlRoomManager : MonoBehaviour
 
         if (restartPromptText != null)
         {
-            // เริ่มต้นแอนิเมชันตัวหนังสือสั่น
             if (restartTextShakeCoroutine != null) StopCoroutine(restartTextShakeCoroutine);
             restartTextShakeCoroutine = StartCoroutine(JitterTextRoutine(restartPromptText, originalRestartPromptPos, restartTextJitterIntensity));
 
-            // พิมพ์ข้อความแบบช้าๆ
             string prompt = "MASH [SPACE] OR [CLICK] TO REBOOT";
             yield return StartCoroutine(TypewriteStory(restartPromptText, prompt, restartTypewriterSpeed));
         }
@@ -1224,7 +1238,6 @@ public class ControlRoomManager : MonoBehaviour
         canMashRestart = true;
     }
 
-    // 🟢 แอนิเมชันสั่นตัวอักษรแบบไม่หยุดยั้งจนกว่าจะจบเกม
     private IEnumerator JitterTextRoutine(TextMeshProUGUI textElement, Vector2 originalPos, float intensity)
     {
         while (textElement != null && textElement.gameObject.activeInHierarchy)
@@ -1283,7 +1296,6 @@ public class ControlRoomManager : MonoBehaviour
                $"Containment intact. Hazard bonus wired directly from Illutio Co.";
     }
 
-    // 🟢 รองรับการกำหนดความเร็วการพิมพ์แบบกำหนดเองได้
     private IEnumerator TypewriteStory(TextMeshProUGUI targetText, string fullText, float speed)
     {
         targetText.text = fullText;
