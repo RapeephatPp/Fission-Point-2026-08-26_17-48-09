@@ -153,7 +153,7 @@ public class MiniGame_PresseInstructed : MonoBehaviour
         if (currentRound > 1 && Random.value <= sameAsLastChance && previousTargetPresses > 0)
         {
             targetPresses = previousTargetPresses;
-            if (instructionText != null) instructionText.text = $"Press the same as last ({targetPresses})..";
+            if (instructionText != null) instructionText.text = $"Press the same as last times..";
         }
         else
         {

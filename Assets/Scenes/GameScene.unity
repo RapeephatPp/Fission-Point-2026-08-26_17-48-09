@@ -8668,6 +8668,10 @@ MonoBehaviour:
   restartTypewriterSpeed: 0.055
   restartTextJitterIntensity: 2.5
   globalVolume: {fileID: 531924925}
+  minigameFocusLensDistortion: 0.22
+  minigameFocusVignette: 0.48
+  minigameFocusCA: 0.25
+  postProcessingFocusSpeed: 3.5
   cursor: {fileID: 1026132201}
   greenZone: {fileID: 1543171986}
   redZone: {fileID: 964832224}

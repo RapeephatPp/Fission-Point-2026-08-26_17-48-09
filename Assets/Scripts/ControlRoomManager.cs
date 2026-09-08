@@ -56,7 +56,19 @@ public class ControlRoomManager : MonoBehaviour
     private ColorAdjustments colorAdjustments;
     
     private float defaultBloomIntensity = 0f;
-    private float defaultVignetteIntensity = 0.15f;
+    private float defaultVignetteIntensity = 0.33f;
+    private float defaultLensDistortion = 0f;
+
+    // 🟢 ระบบปรับ Post-Processing ให้ผู้เล่นโฟกัสมินิเกมชัดเจนขึ้น
+    [Header("Minigame Focus Post-Processing (New!)")]
+    [Tooltip("ค่า Lens Distortion ตอนเข้ามินิเกม เพื่อดัดจอให้นูนโฟกัสเข้ากึ่งกลาง")]
+    [Range(-0.5f, 0.5f)] public float minigameFocusLensDistortion = 0.22f;
+    [Tooltip("ค่า Vignette ขอบมืดตอนเข้ามินิเกม เพื่อหรี่ฉากโต๊ะรอบข้างให้ไม่แย่งสายตา")]
+    [Range(0.2f, 0.8f)] public float minigameFocusVignette = 0.4f;
+    [Tooltip("เพิ่ม Chromatic Aberration เล็กน้อยตอนโฟกัสให้ได้ฟีลลิ่งจอหลอดไฟ")]
+    public float minigameFocusCA = 0.25f;
+    [Tooltip("ความเร็วในการปรับเปลี่ยนค่า Post-Processing เข้า-ออก")]
+    public float postProcessingFocusSpeed = 3.5f;
 
     [Header("Mini-Game UI")]
     public RectTransform cursor;
@@ -74,17 +86,12 @@ public class ControlRoomManager : MonoBehaviour
     [Tooltip("ความเร็วในการกระพริบสว่างวาบของแสงรังสี")]
     public float yellowPulseSpeed = 4.5f;
 
-    // 🟢 ระบบไฟกะพริบเตือนในวันที่มีโอกาสไฟดับ
-    [Header("Ambient Light Flickering (New!)")]
+    [Header("Ambient Light Flickering")]
     [Tooltip("เปิดใช้งานระบบไฟกะพริบเตือนในวันที่ไฟดับได้ (Day 3 ขึ้นไป)")]
     public bool enableLightFlicker = true;
-    [Tooltip("ระยะเวลารอต่ำสุดและสูงสุดระหว่างการกะพริบแต่ละรอบ (วินาที)")]
     public float flickerMinInterval = 8.0f;
     public float flickerMaxInterval = 16.0f;
-    [Tooltip("ความมืดตอนไฟกะพริบ")]
-    [Range(0.1f, 0.8f)]
-    public float flickerDarkness = 0.35f;
-    [Tooltip("Image แผ่นมืดสำหรับทำไฟกะพริบ (เว้นว่างได้ ระบบจะใช้ ScreenFader / Post-Processing ให้เองอัตโนมัติ)")]
+    [Range(0.1f, 0.8f)] public float flickerDarkness = 0.35f;
     public Image lightFlickerOverlay;
 
     [Header("Game Info UI")]
@@ -93,11 +100,8 @@ public class ControlRoomManager : MonoBehaviour
     public TextMeshProUGUI sanityText;
 
     [Header("Sanity Bar UI")]
-    [Tooltip("Image หลอด Sanity (ตั้ง Image Type เป็น Filled)")]
     public Image sanityBar;
-    [Tooltip("ให้หลอดลด/เพิ่มแบบสมูทนุ่มนวล")]
     public bool smoothSanityBar = true;
-    [Tooltip("ความเร็วในการวิ่งของหลอด Sanity")]
     public float sanityBarLerpSpeed = 5.0f;
     public Color sanityHighColor = new Color(0.2f, 0.85f, 0.35f, 1f);
     public Color sanityMidColor = new Color(1f, 0.75f, 0.15f, 1f);
@@ -190,7 +194,6 @@ public class ControlRoomManager : MonoBehaviour
     private bool isZonesMoving = false;
     private bool isDamageFlashing = false;
 
-    // ตัวแปรตัวจับเวลาไฟกะพริบ
     private float flickerTimer = 0f;
     private float nextFlickerDelay = 10f;
 
@@ -235,6 +238,7 @@ public class ControlRoomManager : MonoBehaviour
             
             if (bloom != null) defaultBloomIntensity = (float)bloom.intensity.value;
             if (vignette != null) defaultVignetteIntensity = (float)vignette.intensity.value;
+            if (lensDistortion != null) defaultLensDistortion = (float)lensDistortion.intensity.value;
         }
 
         currentSanity = maxSanity;
@@ -347,7 +351,6 @@ public class ControlRoomManager : MonoBehaviour
         }
     }
 
-    // 🟢 ตรวจสอบและรันไฟกะพริบในวันที่มีโอกาสเกิดไฟดับ (Day 3 ขึ้นไป)
     private void HandleAmbientLightFlicker()
     {
         if (!enableLightFlicker || currentDay < 3 || !isGameActive || isMinigameActive || isMashingBlackout) return;
@@ -495,21 +498,30 @@ public class ControlRoomManager : MonoBehaviour
         return Mathf.Lerp(defaultVignetteIntensity, defaultVignetteIntensity + 0.12f, sanityLossRatio);
     }
 
+    // 🟢 อัปเดตการควบคุม Lens Distortion, Vignette และ CA ตอนโฟกัสมินิเกม
     private void UpdateSanityPostProcessing()
     {
-        if (!isGlitching && !isDamageFlashing && radiationPulseCoroutine == null && chromaticAberration != null)
-        {
-            chromaticAberration.intensity.value = Mathf.MoveTowards(chromaticAberration.intensity.value, GetBaselineCA(), Time.deltaTime * 1.2f);
-        }
+        float speed = Time.deltaTime * postProcessingFocusSpeed;
 
-        if (!isMashingBlackout && !isDamageFlashing && vignette != null)
-        {
-            vignette.intensity.value = Mathf.MoveTowards(vignette.intensity.value, GetBaselineVignette(), Time.deltaTime * 1.2f);
-        }
-
+        // 1. Lens Distortion: ถ้าอยู่ในมินิเกม ให้โค้งเข้าหากึ่งกลาง ถ้าปกติ ให้คืนค่าเดิม
         if (!isZonesMoving && !isGlitching && lensDistortion != null)
         {
-            lensDistortion.intensity.value = Mathf.MoveTowards(lensDistortion.intensity.value, 0f, Time.deltaTime * 2.0f);
+            float targetLD = isMinigameActive ? minigameFocusLensDistortion : defaultLensDistortion;
+            lensDistortion.intensity.value = Mathf.MoveTowards(lensDistortion.intensity.value, targetLD, speed);
+        }
+
+        // 2. Vignette: ถ้าอยู่ในมินิเกม ให้ขอบจอมืดลงเพื่อบังคับสายตา ถ้าปกติ อิงตาม Sanity
+        if (!isMashingBlackout && !isDamageFlashing && vignette != null)
+        {
+            float targetVig = isMinigameActive ? minigameFocusVignette : GetBaselineVignette();
+            vignette.intensity.value = Mathf.MoveTowards(vignette.intensity.value, targetVig, speed);
+        }
+
+        // 3. Chromatic Aberration
+        if (!isGlitching && !isDamageFlashing && radiationPulseCoroutine == null && chromaticAberration != null)
+        {
+            float targetCA = isMinigameActive ? Mathf.Max(GetBaselineCA(), minigameFocusCA) : GetBaselineCA();
+            chromaticAberration.intensity.value = Mathf.MoveTowards(chromaticAberration.intensity.value, targetCA, speed);
         }
     }
 
@@ -587,15 +599,14 @@ public class ControlRoomManager : MonoBehaviour
         switch (chosenEvent)
         {
             case 1:
-                // 🟢 ไฟดับ: ตัด Notification และขอบแดงออก ให้จอดับวูบมืดสนิททันที
                 TriggerRespawn(blackoutZone, initialBlackoutWidth, redZone, 4, false, false);
                 float oldMag = shakeMagnitude; shakeMagnitude = 18f; TriggerShake(); shakeMagnitude = oldMag;
                 
-                SetFlickerDarkness(0f); // ล้างค่ากะพริบเดิม
+                SetFlickerDarkness(0f);
                 if (ScreenFader.Instance != null)
                 {
-                    ScreenFader.Instance.fadeDuration = 0.2f; // ดับวูบอย่างรวดเร็ว
-                    StartCoroutine(ScreenFader.Instance.FadeRoutine(0.96f)); // เกือบมืดสนิท
+                    ScreenFader.Instance.fadeDuration = 0.2f;
+                    StartCoroutine(ScreenFader.Instance.FadeRoutine(0.96f));
                 }
                 if (vignette != null) vignette.intensity.value = 0.6f;
                 if (AudioManager.Instance != null) AudioManager.Instance.PlaySFX("explosionSound");
@@ -689,7 +700,7 @@ public class ControlRoomManager : MonoBehaviour
             glitchCoroutine = null;
         }
         isGlitching = false;
-        if (lensDistortion != null) lensDistortion.intensity.value = 0f;
+        if (lensDistortion != null) lensDistortion.intensity.value = defaultLensDistortion;
         if (chromaticAberration != null) chromaticAberration.intensity.value = GetBaselineCA();
         if (cursor != null) cursor.localScale = originalCursorScale;
     }
@@ -703,7 +714,7 @@ public class ControlRoomManager : MonoBehaviour
         while (elapsed < 0.6f) 
         {
             elapsed += Time.deltaTime;
-            if (lensDistortion != null) lensDistortion.intensity.value = Mathf.Lerp(0f, -0.08f, elapsed / 0.6f);
+            if (lensDistortion != null) lensDistortion.intensity.value = Mathf.Lerp(defaultLensDistortion, -0.08f, elapsed / 0.6f);
             yield return null;
         }
 
@@ -713,11 +724,11 @@ public class ControlRoomManager : MonoBehaviour
         while (elapsed < 0.6f) 
         {
             elapsed += Time.deltaTime;
-            if (lensDistortion != null) lensDistortion.intensity.value = Mathf.Lerp(-0.08f, 0f, elapsed / 0.6f);
+            if (lensDistortion != null) lensDistortion.intensity.value = Mathf.Lerp(-0.08f, defaultLensDistortion, elapsed / 0.6f);
             yield return null;
         }
 
-        if (lensDistortion != null) lensDistortion.intensity.value = 0f;
+        if (lensDistortion != null) lensDistortion.intensity.value = defaultLensDistortion;
         isZonesMoving = false;
         movingZonesCoroutine = null;
     }
@@ -783,7 +794,7 @@ public class ControlRoomManager : MonoBehaviour
         
         if (chromaticAberration != null) chromaticAberration.intensity.value = GetBaselineCA();
         if (vignette != null) vignette.intensity.value = GetBaselineVignette();
-        if (lensDistortion != null) lensDistortion.intensity.value = 0f;
+        if (lensDistortion != null) lensDistortion.intensity.value = defaultLensDistortion;
 
         if (controlRoomContainer != null)
         {
@@ -1521,7 +1532,6 @@ public class ControlRoomManager : MonoBehaviour
         if (eventBorderImage != null) StartCoroutine(PulseEventBorder());
     }
 
-    // 🟢 ฟังก์ชัน PulseEventBorder สำหรับกะพริบขอบแดงในอีเวนต์อื่น
     private IEnumerator PulseEventBorder()
     {
         if (eventBorderImage == null) yield break;
@@ -1735,16 +1745,16 @@ public class ControlRoomManager : MonoBehaviour
                 break;
             case 6:
                 lines = new string[] {
-                    "Day 6. The console is literally burning my fingers.",
-                    "Alarms ringing non-stop. I took a double dose today, but my head is still splitting.",
-                    "Hold it together... Don't lose your mind now."
-                };
+               "Day 6. The console is literally burning my fingers.",
+                "Alarms ringing non-stop. I took a double dose today, but my head is still splitting.",
+                "Hold it together... Don't lose your mind now."
+            };
                 break;
             case 7:
                 lines = new string[] {
-                    "Day 7. The last day.",
-                    "I don't care anymore! Just survive this shift and get the hell out of here!"
-                };
+                "Day 7. The last day.",
+                "I don't care anymore! Just survive this shift and get the hell out of here!"
+            };
                 break;
         }
 
