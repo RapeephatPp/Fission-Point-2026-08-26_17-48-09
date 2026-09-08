@@ -939,6 +939,23 @@ public class ControlRoomManager : MonoBehaviour
             
             TriggerRespawn(greenZone, initialGreenWidth, redZone, 1, false, true);
             if (AudioManager.Instance != null) AudioManager.Instance.PlaySFX("hitSound");
+
+            if (dialogManager != null)
+            {
+                if (!hasTakenFirstMeds)
+                {
+                    dialogManager.StartDialog("Me", new string[] { "Hello, my trusty old pills. It's been a while." });
+                    hasTakenFirstMeds = true;
+                }
+                else
+                {
+                    string[] genericMeds = {
+                "Still tastes like crap.",
+                "That helps a lot.",
+                "Much better.",
+                "My mind feels so much clearer now."};
+                }
+            }
         }
         else if (IsInsideZone(cursorX, redZone, 1.0f)) 
         {
@@ -1480,20 +1497,23 @@ public class ControlRoomManager : MonoBehaviour
                 break;
             case 5:
                 lines = new string[] {
-                "Day 5.",
-                "The noises in this room are driving me crazy."
+                "Day 5. Is the AC broken, or is the core actually melting?",
+                "It's getting damn hot in here.",
+                "My hands won't stop shaking. Where are those pills...",
+                "Just swallow it down and focus. Two more days."
             };
                 break;
             case 6:
                 lines = new string[] {
-                "Day 6. Almost done.",
-                "Just one more day after this. Don't screw up now."
+               "Day 6. The console is literally burning my fingers.",
+                "Alarms ringing non-stop. I took a double dose today, but my head is still splitting.",
+                "Hold it together... Don't lose your mind now."
             };
                 break;
             case 7:
                 lines = new string[] {
                 "Day 7. The last day.",
-                "Let's finish this and get the hell out of here."
+                "I don't care anymore! Just survive this shift and get the hell out of here!"
             };
                 break;
         }
