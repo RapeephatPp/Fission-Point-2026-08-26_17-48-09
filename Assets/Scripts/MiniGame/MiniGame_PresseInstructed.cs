@@ -55,9 +55,6 @@ public class MiniGame_PresseInstructed : MonoBehaviour
     private float timeSinceLastPress;
     private bool isRoundActive = false;
 
-    public Dialogue dialogManager;
-    private static bool hasSeenThisMinigame = false;
-
     private void OnEnable()
     {
         // 🟢 เปลี่ยนมาเรียก Idle แทน เพื่อไม่ให้เกมเริ่มเองตอนเปิดฉาก 
@@ -80,12 +77,6 @@ public class MiniGame_PresseInstructed : MonoBehaviour
         {
             Debug.LogError("ยังไม่ได้ใส่ Game Manager ในหน้าต่าง Inspector ของมินิเกม กด!");
             return; 
-        }
-
-        if (!hasSeenThisMinigame && dialogManager != null)
-        {
-            dialogManager.StartDialog("Me", new string[] { "This one... just press the exact number on the screen, right? Heh, my memory's still sharp." });
-            hasSeenThisMinigame = true;
         }
 
         int day = gameManager.currentDay;
