@@ -4,18 +4,18 @@ using TMPro;
 
 public class Dialogue : MonoBehaviour
 {
-   [Header("UI Elements")]
+    [Header("UI Elements")]
     public GameObject dialogPanel;
     public TextMeshProUGUI speakerText;
     public TextMeshProUGUI dialogText;
 
     [Header("Settings")]
-    public float typeSpeed = 0.03f;
+    public float typeSpeed = 0.04f;           
+    public float autoAdvanceDelay = 2.0f;     
 
     private string[] currentLines;
     private int lineIndex;
-    private bool isTyping;
-    private Coroutine typingCoroutine;
+    private Coroutine dialogCoroutine;
 
     public System.Action OnDialogFinished;
 
@@ -24,64 +24,44 @@ public class Dialogue : MonoBehaviour
         if (dialogPanel != null) dialogPanel.SetActive(false);
     }
 
-    private void Update()
-    {
-        if (!dialogPanel.activeSelf) return;
-
-        if (Input.GetKeyDown(KeyCode.Space) || Input.GetMouseButtonDown(0))
-        {
-            if (isTyping)
-            {
-                StopCoroutine(typingCoroutine);
-                dialogText.text = currentLines[lineIndex];
-                isTyping = false;
-            }
-            else
-            {
-                NextLine();
-            }
-        }
-    }
-
     public void StartDialog(string speakerName, string[] lines)
     {
         dialogPanel.SetActive(true);
-        speakerText.text = speakerName;
+        if (speakerText != null) speakerText.text = speakerName;
         currentLines = lines;
         lineIndex = 0;
-        
-        Time.timeScale = 0f; 
-        
-        if (typingCoroutine != null) StopCoroutine(typingCoroutine);
-        typingCoroutine = StartCoroutine(TypeLine());
+
+       
+
+        if (dialogCoroutine != null) StopCoroutine(dialogCoroutine);
+        dialogCoroutine = StartCoroutine(PlayDialogRoutine());
     }
 
-    private IEnumerator TypeLine()
+    private IEnumerator PlayDialogRoutine()
     {
-        isTyping = true;
-        dialogText.text = "";
-
-        foreach (char c in currentLines[lineIndex].ToCharArray())
+        
+        while (lineIndex < currentLines.Length)
         {
-            dialogText.text += c;
-            yield return new WaitForSecondsRealtime(typeSpeed); 
+            dialogText.text = "";
+
+            
+            foreach (char c in currentLines[lineIndex].ToCharArray())
+            {
+                dialogText.text += c;
+                yield return new WaitForSecondsRealtime(typeSpeed);
+            }
+
+            
+            yield return new WaitForSecondsRealtime(autoAdvanceDelay);
+
+            
+            lineIndex++;
         }
 
-        isTyping = false;
-    }
+        // เมื่อครบทุกบรรทัด จะปิด UI และคืนค่าเวลาให้เกมเดินต่อ
+        if (dialogPanel != null) dialogPanel.SetActive(false);
+        Time.timeScale = 1f;
 
-    private void NextLine()
-    {
-        lineIndex++;
-        if (lineIndex < currentLines.Length)
-        {
-            typingCoroutine = StartCoroutine(TypeLine());
-        }
-        else
-        {
-            dialogPanel.SetActive(false);
-            Time.timeScale = 1f; 
-            OnDialogFinished?.Invoke();
-        }
+        OnDialogFinished?.Invoke(); 
     }
 }
