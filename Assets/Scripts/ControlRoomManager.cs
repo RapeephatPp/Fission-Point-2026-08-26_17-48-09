@@ -53,6 +53,7 @@ public class ControlRoomManager : MonoBehaviour
     private Vignette vignette;
     private Bloom bloom;
     private LensDistortion lensDistortion;
+    private ColorAdjustments colorAdjustments;
     
     private float defaultBloomIntensity = 0f;
     private float defaultVignetteIntensity = 0.15f;
@@ -67,20 +68,45 @@ public class ControlRoomManager : MonoBehaviour
     public RectTransform blackoutZone; 
     public Image eventBorderImage;     
 
-    // 🟢 ตัวแปรสำหรับปรับแสง HDR วาบๆ ของโซนสีเหลือง
-    [Header("Radiation HDR Glow Settings (New!)")]
-    [Tooltip("ระดับความสว่างวาบสูงสุดของสีเหลืองแบบ HDR (แนะนำ 2.5 - 4.0 เพื่อให้ทะลุค่า Bloom Threshold)")]
+    [Header("Radiation HDR Glow Settings")]
+    [Tooltip("ระดับความสว่างวาบสูงสุดของสีเหลืองแบบ HDR")]
     public float yellowGlowIntensity = 3.2f;
     [Tooltip("ความเร็วในการกระพริบสว่างวาบของแสงรังสี")]
     public float yellowPulseSpeed = 4.5f;
+
+    // 🟢 ระบบไฟกะพริบเตือนในวันที่มีโอกาสไฟดับ
+    [Header("Ambient Light Flickering (New!)")]
+    [Tooltip("เปิดใช้งานระบบไฟกะพริบเตือนในวันที่ไฟดับได้ (Day 3 ขึ้นไป)")]
+    public bool enableLightFlicker = true;
+    [Tooltip("ระยะเวลารอต่ำสุดและสูงสุดระหว่างการกะพริบแต่ละรอบ (วินาที)")]
+    public float flickerMinInterval = 8.0f;
+    public float flickerMaxInterval = 16.0f;
+    [Tooltip("ความมืดตอนไฟกะพริบ")]
+    [Range(0.1f, 0.8f)]
+    public float flickerDarkness = 0.35f;
+    [Tooltip("Image แผ่นมืดสำหรับทำไฟกะพริบ (เว้นว่างได้ ระบบจะใช้ ScreenFader / Post-Processing ให้เองอัตโนมัติ)")]
+    public Image lightFlickerOverlay;
 
     [Header("Game Info UI")]
     public TextMeshProUGUI timerText;
     public TextMeshProUGUI dayText;
     public TextMeshProUGUI sanityText;
 
+    [Header("Sanity Bar UI")]
+    [Tooltip("Image หลอด Sanity (ตั้ง Image Type เป็น Filled)")]
+    public Image sanityBar;
+    [Tooltip("ให้หลอดลด/เพิ่มแบบสมูทนุ่มนวล")]
+    public bool smoothSanityBar = true;
+    [Tooltip("ความเร็วในการวิ่งของหลอด Sanity")]
+    public float sanityBarLerpSpeed = 5.0f;
+    public Color sanityHighColor = new Color(0.2f, 0.85f, 0.35f, 1f);
+    public Color sanityMidColor = new Color(1f, 0.75f, 0.15f, 1f);
+    public Color sanityLowColor = new Color(0.95f, 0.2f, 0.2f, 1f);
+
     [Header("Notification UI")]
     public TextMeshProUGUI notificationText; 
+    public TextMeshProUGUI tipTextTitle; 
+    public TextMeshProUGUI tipTextBody; 
     public TextMeshProUGUI tipText; 
     public float notificationDuration = 2.0f; 
     public float typeWriterSpeed = 0.05f; 
@@ -144,9 +170,9 @@ public class ControlRoomManager : MonoBehaviour
     private Vector2 originalIncidentReportPos; 
     private Vector2 originalRestartPromptPos;
 
-    // 🟢 เก็บตัวแปร Image และสีดั้งเดิมของโซนสีเหลือง
     private Image yellowZoneImage;
     private Color originalYellowColor = Color.yellow;
+    private float targetSanityFill = 1f;
 
     private bool isGreenSpawning = false;
     private bool isRedSpawning = false;
@@ -163,6 +189,10 @@ public class ControlRoomManager : MonoBehaviour
     private bool isGlitching = false;
     private bool isZonesMoving = false;
     private bool isDamageFlashing = false;
+
+    // ตัวแปรตัวจับเวลาไฟกะพริบ
+    private float flickerTimer = 0f;
+    private float nextFlickerDelay = 10f;
 
     // --- Tracking Stats ---
     private int totalGreenStabilized = 0;
@@ -188,6 +218,7 @@ public class ControlRoomManager : MonoBehaviour
     private Coroutine glitchCoroutine;
     private Coroutine movingZonesCoroutine;
     private Coroutine restartTextShakeCoroutine;
+    private Coroutine lightFlickerCoroutine;
 
     void Start()
     {
@@ -200,6 +231,7 @@ public class ControlRoomManager : MonoBehaviour
             globalVolume.profile.TryGet(out vignette);
             globalVolume.profile.TryGet(out bloom);
             globalVolume.profile.TryGet(out lensDistortion);
+            globalVolume.profile.TryGet(out colorAdjustments);
             
             if (bloom != null) defaultBloomIntensity = (float)bloom.intensity.value;
             if (vignette != null) defaultVignetteIntensity = (float)vignette.intensity.value;
@@ -247,12 +279,22 @@ public class ControlRoomManager : MonoBehaviour
 
         if (damageFlashImage != null) { Color c = damageFlashImage.color; c.a = 0f; damageFlashImage.color = c; }
         if (eventBorderImage != null) { Color c = eventBorderImage.color; c.a = 0f; eventBorderImage.color = c; }
+        if (lightFlickerOverlay != null) { Color c = lightFlickerOverlay.color; c.a = 0f; lightFlickerOverlay.color = c; }
         
         if (notificationText != null) { Color c = notificationText.color; c.a = 0f; notificationText.color = c; notificationText.gameObject.SetActive(false); }
+        if (tipTextTitle != null) { Color c = tipTextTitle.color; c.a = 0f; tipTextTitle.color = c; tipTextTitle.gameObject.SetActive(false); }
+        if (tipTextBody != null) { Color c = tipTextBody.color; c.a = 0f; tipTextBody.color = c; tipTextBody.gameObject.SetActive(false); }
         if (tipText != null) { Color c = tipText.color; c.a = 0f; tipText.color = c; tipText.gameObject.SetActive(false); }
 
         if (yellowZone != null) yellowZone.sizeDelta = new Vector2(0, yellowZone.sizeDelta.y);
         if (blackoutZone != null) blackoutZone.sizeDelta = new Vector2(0, blackoutZone.sizeDelta.y);
+
+        if (sanityBar != null)
+        {
+            targetSanityFill = Mathf.Clamp01((float)currentSanity / maxSanity);
+            sanityBar.fillAmount = targetSanityFill;
+            UpdateSanityBarVisual(targetSanityFill);
+        }
 
         UpdateDayUI();
         UpdateSanityUI();
@@ -282,6 +324,8 @@ public class ControlRoomManager : MonoBehaviour
 
         UpdateTimer();
         UpdateSanityPostProcessing();
+        UpdateSanityBarAnimation();
+        HandleAmbientLightFlicker();
 
         if (isMinigameActive) return;
 
@@ -301,6 +345,96 @@ public class ControlRoomManager : MonoBehaviour
             TriggerCursorBump(); 
             CheckHitZone();
         }
+    }
+
+    // 🟢 ตรวจสอบและรันไฟกะพริบในวันที่มีโอกาสเกิดไฟดับ (Day 3 ขึ้นไป)
+    private void HandleAmbientLightFlicker()
+    {
+        if (!enableLightFlicker || currentDay < 3 || !isGameActive || isMinigameActive || isMashingBlackout) return;
+
+        flickerTimer += Time.deltaTime;
+        if (flickerTimer >= nextFlickerDelay)
+        {
+            flickerTimer = 0f;
+            nextFlickerDelay = Random.Range(flickerMinInterval, flickerMaxInterval);
+            if (lightFlickerCoroutine != null) StopCoroutine(lightFlickerCoroutine);
+            lightFlickerCoroutine = StartCoroutine(SubtleLightFlickerRoutine());
+        }
+    }
+
+    private IEnumerator SubtleLightFlickerRoutine()
+    {
+        int flickCount = Random.Range(2, 4);
+        for (int i = 0; i < flickCount; i++)
+        {
+            if (isMashingBlackout || !isGameActive) yield break;
+
+            SetFlickerDarkness(flickerDarkness);
+            if (AudioManager.Instance != null && Random.value > 0.5f) AudioManager.Instance.PlaySFX("clickSound");
+            yield return new WaitForSecondsRealtime(Random.Range(0.04f, 0.08f));
+
+            SetFlickerDarkness(0f);
+            yield return new WaitForSecondsRealtime(Random.Range(0.05f, 0.12f));
+        }
+        SetFlickerDarkness(0f);
+        lightFlickerCoroutine = null;
+    }
+
+    private void SetFlickerDarkness(float darkness)
+    {
+        if (lightFlickerOverlay != null)
+        {
+            Color c = lightFlickerOverlay.color;
+            c.a = darkness;
+            lightFlickerOverlay.color = c;
+        }
+        else if (colorAdjustments != null)
+        {
+            colorAdjustments.postExposure.value = -darkness * 4.0f;
+        }
+        else if (ScreenFader.Instance != null && ScreenFader.Instance.fadeImageGroup != null && !isMashingBlackout)
+        {
+            ScreenFader.Instance.fadeImageGroup.alpha = darkness;
+        }
+    }
+
+    private void UpdateSanityBarAnimation()
+    {
+        if (sanityBar == null) return;
+
+        if (smoothSanityBar)
+        {
+            sanityBar.fillAmount = Mathf.MoveTowards(sanityBar.fillAmount, targetSanityFill, Time.unscaledDeltaTime * sanityBarLerpSpeed);
+        }
+        else
+        {
+            sanityBar.fillAmount = targetSanityFill;
+        }
+
+        UpdateSanityBarVisual(sanityBar.fillAmount);
+    }
+
+    private void UpdateSanityBarVisual(float currentFill)
+    {
+        if (sanityBar == null) return;
+
+        Color targetColor;
+        if (currentFill > 0.5f)
+        {
+            targetColor = Color.Lerp(sanityMidColor, sanityHighColor, (currentFill - 0.5f) * 2f);
+        }
+        else
+        {
+            targetColor = Color.Lerp(sanityLowColor, sanityMidColor, currentFill * 2f);
+        }
+
+        if (currentFill <= 0.25f && isGameActive)
+        {
+            float pulse = Mathf.PingPong(Time.unscaledTime * 7f, 0.4f);
+            targetColor = Color.Lerp(targetColor, Color.white, pulse);
+        }
+
+        sanityBar.color = targetColor;
     }
 
     private void HandleRestartMashing()
@@ -453,12 +587,20 @@ public class ControlRoomManager : MonoBehaviour
         switch (chosenEvent)
         {
             case 1:
+                // 🟢 ไฟดับ: ตัด Notification และขอบแดงออก ให้จอดับวูบมืดสนิททันที
                 TriggerRespawn(blackoutZone, initialBlackoutWidth, redZone, 4, false, false);
-                ShowEventWarning("CRITICAL: POWER FAILURE", "TIP: MASH Spacebar to restart the generator!");
-                float oldMag = shakeMagnitude; shakeMagnitude = 20f; TriggerShake(); shakeMagnitude = oldMag;
-                if (ScreenFader.Instance != null) StartCoroutine(ScreenFader.Instance.FadeRoutine(0.85f));
-                if (vignette != null) vignette.intensity.value = 0.5f;
+                float oldMag = shakeMagnitude; shakeMagnitude = 18f; TriggerShake(); shakeMagnitude = oldMag;
+                
+                SetFlickerDarkness(0f); // ล้างค่ากะพริบเดิม
+                if (ScreenFader.Instance != null)
+                {
+                    ScreenFader.Instance.fadeDuration = 0.2f; // ดับวูบอย่างรวดเร็ว
+                    StartCoroutine(ScreenFader.Instance.FadeRoutine(0.96f)); // เกือบมืดสนิท
+                }
+                if (vignette != null) vignette.intensity.value = 0.6f;
+                if (AudioManager.Instance != null) AudioManager.Instance.PlaySFX("explosionSound");
                 break;
+
             case 2:
                 TriggerRespawn(yellowZone, initialYellowWidth, redZone, 3, false, false);
                 ShowEventWarning("WARNING: RADIATION LEAK", "TIP: Do NOT touch the YELLOW zone!");
@@ -476,7 +618,6 @@ public class ControlRoomManager : MonoBehaviour
         }
     }
 
-    // 🟢 รังสีรั่ว: สั่งกระพริบแสง HDR บน Yellow Zone ให้เรืองแสงสว่างวาบๆ ทะลุ Bloom
     private IEnumerator RadiationPulseRoutine()
     {
         if (yellowZoneImage == null && yellowZone != null)
@@ -484,17 +625,14 @@ public class ControlRoomManager : MonoBehaviour
 
         while (yellowZone != null && yellowZone.rect.width > 0)
         {
-            // กระตุก Chromatic Aberration เบาๆ
             if (chromaticAberration != null && !isGlitching && !isDamageFlashing)
             {
                 chromaticAberration.intensity.value = GetBaselineCA() + Mathf.PingPong(Time.time * 1.5f, 0.08f);
             }
 
-            // 🟢 คำนวณคลื่นเร่งแสง HDR Pulse
             if (yellowZoneImage != null)
             {
                 float wave = Mathf.PingPong(Time.time * yellowPulseSpeed, 1f);
-                // ไล่ระดับความสว่างจาก 1.0 (ปกติ) ไปจนถึง yellowGlowIntensity (HDR สว่างจ้า)
                 float currentIntensity = Mathf.Lerp(1.0f, yellowGlowIntensity, wave);
 
                 yellowZoneImage.color = new Color(
@@ -508,7 +646,6 @@ public class ControlRoomManager : MonoBehaviour
             yield return null;
         }
 
-        // คืนค่าสีเดิม
         if (yellowZoneImage != null)
         {
             yellowZoneImage.color = originalYellowColor;
@@ -632,6 +769,9 @@ public class ControlRoomManager : MonoBehaviour
         isMashingBlackout = false;
         StopGlitchImmediately();
 
+        if (lightFlickerCoroutine != null) { StopCoroutine(lightFlickerCoroutine); lightFlickerCoroutine = null; }
+        SetFlickerDarkness(0f);
+
         if (movingZonesCoroutine != null) { StopCoroutine(movingZonesCoroutine); movingZonesCoroutine = null; }
         isZonesMoving = false;
         if (radiationPulseCoroutine != null) { StopCoroutine(radiationPulseCoroutine); radiationPulseCoroutine = null; }
@@ -669,18 +809,28 @@ public class ControlRoomManager : MonoBehaviour
 
         if (ScreenFader.Instance != null) 
         {
-            yield return StartCoroutine(ScreenFader.Instance.FadeRoutine(0f));
             ScreenFader.Instance.fadeDuration = 0.5f; 
+            yield return StartCoroutine(ScreenFader.Instance.FadeRoutine(0f));
         }
 
         isGameActive = true;
         ShowNotification("DAY " + currentDay, "TIP: The system is getting faster. Stay focused.");
-
         PlayDailyIntroDialog(currentDay);
     }
 
     private void UpdateDayUI() { if (dayText != null) dayText.text = "Day: " + currentDay + "/" + maxDays; }
-    private void UpdateSanityUI() { if (sanityText != null) sanityText.text = "Sanity: " + currentSanity + "/" + maxSanity; }
+
+    private void UpdateSanityUI() 
+    { 
+        if (sanityText != null) sanityText.text = "Sanity: " + currentSanity + "/" + maxSanity; 
+        targetSanityFill = Mathf.Clamp01((float)currentSanity / maxSanity);
+
+        if (!smoothSanityBar && sanityBar != null)
+        {
+            sanityBar.fillAmount = targetSanityFill;
+            UpdateSanityBarVisual(targetSanityFill);
+        }
+    }
 
     private void HandleGreenLifeTime()
     {
@@ -729,8 +879,13 @@ public class ControlRoomManager : MonoBehaviour
                 StartCoroutine(FlashDamageScreen()); 
                 if (AudioManager.Instance != null) AudioManager.Instance.PlaySFX("explosionSound");
                 
+                PlaySanityLossDialog();
                 StartCoroutine(FadeOutAndHideRoutine(blackoutZone, 4)); 
-                if (ScreenFader.Instance != null) StartCoroutine(ScreenFader.Instance.FadeRoutine(0f)); 
+                if (ScreenFader.Instance != null)
+                {
+                    ScreenFader.Instance.fadeDuration = 0.5f;
+                    StartCoroutine(ScreenFader.Instance.FadeRoutine(0f)); 
+                }
                 UpdateSanityUI();
                 CheckGameOver();
             }
@@ -894,10 +1049,10 @@ public class ControlRoomManager : MonoBehaviour
             float mashProgress = (float)blackoutMashCount / requiredBlackoutMash;
             
             if (ScreenFader.Instance != null) 
-                StartCoroutine(ScreenFader.Instance.FadeRoutine(0.85f - (0.85f * mashProgress)));
+                StartCoroutine(ScreenFader.Instance.FadeRoutine(0.96f - (0.96f * mashProgress)));
             
             if (vignette != null)
-                vignette.intensity.value = Mathf.Lerp(0.5f, GetBaselineVignette(), mashProgress);
+                vignette.intensity.value = Mathf.Lerp(0.6f, GetBaselineVignette(), mashProgress);
             
             if (blackoutMashCount >= requiredBlackoutMash)
             {
@@ -908,7 +1063,11 @@ public class ControlRoomManager : MonoBehaviour
                 if (currentSanity > maxSanity) currentSanity = maxSanity;
                 
                 ShowNotification("POWER RESTORED", "TIP: Great job! Stay alert.");
-                if (ScreenFader.Instance != null) StartCoroutine(ScreenFader.Instance.FadeRoutine(0f));
+                if (ScreenFader.Instance != null)
+                {
+                    ScreenFader.Instance.fadeDuration = 0.5f;
+                    StartCoroutine(ScreenFader.Instance.FadeRoutine(0f));
+                }
             }
             return; 
         }
@@ -954,10 +1113,11 @@ public class ControlRoomManager : MonoBehaviour
                 else
                 {
                     string[] genericMeds = {
-                "Still tastes like crap.",
-                "That helps a lot.",
-                "Much better.",
-                "My mind feels so much clearer now."};
+                        "Still tastes like crap.",
+                        "That helps a lot.",
+                        "Much better.",
+                        "My mind feels so much clearer now."
+                    };
 
                     dialogManager.StartDialog("Me", new string[] { genericMeds[Random.Range(0, genericMeds.Length)] });
                 }
@@ -1361,6 +1521,7 @@ public class ControlRoomManager : MonoBehaviour
         if (eventBorderImage != null) StartCoroutine(PulseEventBorder());
     }
 
+    // 🟢 ฟังก์ชัน PulseEventBorder สำหรับกะพริบขอบแดงในอีเวนต์อื่น
     private IEnumerator PulseEventBorder()
     {
         if (eventBorderImage == null) yield break;
@@ -1379,46 +1540,109 @@ public class ControlRoomManager : MonoBehaviour
 
     private void ShowNotification(string message, string tip = "")
     {
-        if (notificationText != null)
+        ParseTipText(tip, out string title, out string body);
+        ShowNotification(message, title, body);
+    }
+
+    private void ShowNotification(string message, string title, string body)
+    {
+        if (notificationCoroutine != null) StopCoroutine(notificationCoroutine);
+        notificationCoroutine = StartCoroutine(NotificationRoutine(message, title, body));
+    }
+
+    private void ParseTipText(string rawTip, out string title, out string body)
+    {
+        if (string.IsNullOrEmpty(rawTip))
         {
-            if (notificationCoroutine != null) StopCoroutine(notificationCoroutine);
-            notificationCoroutine = StartCoroutine(NotificationRoutine(message, tip));
+            title = "";
+            body = "";
+            return;
+        }
+
+        int colonIndex = rawTip.IndexOf(':');
+        if (colonIndex >= 0)
+        {
+            title = rawTip.Substring(0, colonIndex).Trim();
+            body = rawTip.Substring(colonIndex + 1).Trim();
+        }
+        else
+        {
+            title = "TIP";
+            body = rawTip.Trim();
         }
     }
 
-    private IEnumerator NotificationRoutine(string message, string tip)
+    private IEnumerator NotificationRoutine(string message, string title, string body)
     {
-        notificationText.text = message;
-        notificationText.maxVisibleCharacters = 0;
-        notificationText.gameObject.SetActive(true);
-        
-        Color c = notificationText.color;
-        c.a = 1f;
-        notificationText.color = c;
+        if (notificationText != null)
+        {
+            notificationText.text = message;
+            notificationText.maxVisibleCharacters = 0;
+            notificationText.gameObject.SetActive(!string.IsNullOrEmpty(message));
+            Color c = notificationText.color; c.a = 1f; notificationText.color = c;
+        }
+
+        if (tipTextTitle != null)
+        {
+            tipTextTitle.text = title;
+            tipTextTitle.maxVisibleCharacters = 0;
+            tipTextTitle.gameObject.SetActive(!string.IsNullOrEmpty(title));
+            Color c = tipTextTitle.color; c.a = 1f; tipTextTitle.color = c;
+        }
+
+        if (tipTextBody != null)
+        {
+            tipTextBody.text = body;
+            tipTextBody.maxVisibleCharacters = 0;
+            tipTextBody.gameObject.SetActive(!string.IsNullOrEmpty(body));
+            Color c = tipTextBody.color; c.a = 1f; tipTextBody.color = c;
+        }
 
         if (tipText != null)
         {
-            tipText.text = tip;
+            string combined = string.IsNullOrEmpty(title) ? body : $"{title}: {body}";
+            tipText.text = combined;
             tipText.maxVisibleCharacters = 0;
-            tipText.gameObject.SetActive(true);
-            Color tipC = tipText.color;
-            tipC.a = 1f;
-            tipText.color = tipC;
+            tipText.gameObject.SetActive(!string.IsNullOrEmpty(combined));
+            Color c = tipText.color; c.a = 1f; tipText.color = c;
         }
 
-        for (int i = 0; i <= message.Length; i++)
+        if (notificationText != null && !string.IsNullOrEmpty(message))
         {
-            notificationText.maxVisibleCharacters = i;
-            yield return new WaitForSecondsRealtime(typeWriterSpeed);
+            for (int i = 0; i <= message.Length; i++)
+            {
+                notificationText.maxVisibleCharacters = i;
+                yield return new WaitForSecondsRealtime(typeWriterSpeed);
+            }
         }
 
-        if (tipText != null && !string.IsNullOrEmpty(tip))
+        if (tipTextTitle != null && !string.IsNullOrEmpty(title))
         {
-            yield return new WaitForSecondsRealtime(0.2f); 
-            for (int i = 0; i <= tip.Length; i++)
+            yield return new WaitForSecondsRealtime(0.12f);
+            for (int i = 0; i <= title.Length; i++)
+            {
+                tipTextTitle.maxVisibleCharacters = i;
+                yield return new WaitForSecondsRealtime(typeWriterSpeed * 0.6f);
+            }
+        }
+
+        if (tipTextBody != null && !string.IsNullOrEmpty(body))
+        {
+            yield return new WaitForSecondsRealtime(0.08f);
+            for (int i = 0; i <= body.Length; i++)
+            {
+                tipTextBody.maxVisibleCharacters = i;
+                yield return new WaitForSecondsRealtime(typeWriterSpeed * 0.5f);
+            }
+        }
+
+        if (tipText != null && (tipTextTitle == null && tipTextBody == null) && !string.IsNullOrEmpty(tipText.text))
+        {
+            yield return new WaitForSecondsRealtime(0.15f);
+            for (int i = 0; i <= tipText.text.Length; i++)
             {
                 tipText.maxVisibleCharacters = i;
-                yield return new WaitForSecondsRealtime(typeWriterSpeed * 0.5f); 
+                yield return new WaitForSecondsRealtime(typeWriterSpeed * 0.5f);
             }
         }
 
@@ -1431,19 +1655,16 @@ public class ControlRoomManager : MonoBehaviour
             elapsed += Time.unscaledDeltaTime;
             float alpha = Mathf.Lerp(1f, 0f, elapsed / fadeTime);
             
-            c.a = alpha;
-            notificationText.color = c;
-            
-            if (tipText != null) {
-                Color tipC = tipText.color;
-                tipC.a = alpha;
-                tipText.color = tipC;
-            }
-            
+            if (notificationText != null) { Color c = notificationText.color; c.a = alpha; notificationText.color = c; }
+            if (tipTextTitle != null) { Color c = tipTextTitle.color; c.a = alpha; tipTextTitle.color = c; }
+            if (tipTextBody != null) { Color c = tipTextBody.color; c.a = alpha; tipTextBody.color = c; }
+            if (tipText != null) { Color c = tipText.color; c.a = alpha; tipText.color = c; }
             yield return null;
         }
         
-        notificationText.gameObject.SetActive(false);
+        if (notificationText != null) notificationText.gameObject.SetActive(false);
+        if (tipTextTitle != null) tipTextTitle.gameObject.SetActive(false);
+        if (tipTextBody != null) tipTextBody.gameObject.SetActive(false);
         if (tipText != null) tipText.gameObject.SetActive(false);
     }
 
@@ -1478,56 +1699,55 @@ public class ControlRoomManager : MonoBehaviour
                 if (!hasPlayedIntro)
                 {
                     lines = new string[] {
-                    "Dammit. I ended up coming back here again.",
-                    "Even though I swore I'd never step foot in this place again.",
-                    "What choice do I have? I need the cash.",
-                    "I swear, this is the last time. Alright... just 7 days."
-                };
+                        "Dammit. I ended up coming back here again.",
+                        "Even though I swore I'd never step foot in this place again.",
+                        "What choice do I have? I need the cash.",
+                        "I swear, this is the last time. Alright... just 7 days."
+                    };
                     hasPlayedIntro = true;
                 }
                 break;
             case 2:
                 lines = new string[] {
-                "Day 2. My head is pounding.",
-                "Let's just get this over with."
-            };
+                    "Day 2. My head is pounding.",
+                    "Let's just get this over with."
+                };
                 break;
             case 3:
                 lines = new string[] {
-                "Third day.",
-                "The system is getting more unstable. Or maybe it's just me."
-            };
+                    "Third day.",
+                    "The system is getting more unstable. Or maybe it's just me."
+                };
                 break;
             case 4:
                 lines = new string[] {
-                "Day 4. Halfway there.",
-                "Just keep the core from melting. Simple, right?"
-            };
+                    "Day 4. Halfway there.",
+                    "Just keep the core from melting. Simple, right?"
+                };
                 break;
             case 5:
                 lines = new string[] {
-                "Day 5. Is the AC broken, or is the core actually melting?",
-                "It's getting damn hot in here.",
-                "My hands won't stop shaking. Where are those pills...",
-                "Just swallow it down and focus. Two more days."
-            };
+                    "Day 5. Is the AC broken, or is the core actually melting?",
+                    "It's getting damn hot in here.",
+                    "My hands won't stop shaking. Where are those pills...",
+                    "Just swallow it down and focus. Two more days."
+                };
                 break;
             case 6:
                 lines = new string[] {
-               "Day 6. The console is literally burning my fingers.",
-                "Alarms ringing non-stop. I took a double dose today, but my head is still splitting.",
-                "Hold it together... Don't lose your mind now."
-            };
+                    "Day 6. The console is literally burning my fingers.",
+                    "Alarms ringing non-stop. I took a double dose today, but my head is still splitting.",
+                    "Hold it together... Don't lose your mind now."
+                };
                 break;
             case 7:
                 lines = new string[] {
-                "Day 7. The last day.",
-                "I don't care anymore! Just survive this shift and get the hell out of here!"
-            };
+                    "Day 7. The last day.",
+                    "I don't care anymore! Just survive this shift and get the hell out of here!"
+                };
                 break;
         }
 
-        // ถ้ามีบทพูดในวันนั้นๆ ให้เรียก DialogManager
         if (lines != null)
         {
             dialogManager.StartDialog("Me", lines);
@@ -1545,13 +1765,12 @@ public class ControlRoomManager : MonoBehaviour
         }
         else
         {
-            
             string[] sanityLossLines = {
-            "Focus, damn it!", 
-            "These alarms are driving me crazy.", 
-            "This is bad...", 
-            "I can't take this!" 
-        };
+                "Focus, damn it!", 
+                "These alarms are driving me crazy.", 
+                "This is bad...", 
+                "I can't take this!" 
+            };
             dialogManager.StartDialog("Me", new string[] { sanityLossLines[Random.Range(0, sanityLossLines.Length)] });
         }
     }
