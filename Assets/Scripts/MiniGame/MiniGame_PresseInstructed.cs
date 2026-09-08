@@ -15,35 +15,33 @@ public class MiniGame_PresseInstructed : MonoBehaviour
     [Tooltip("ลากปุ่มสี่เหลี่ยมเล็กๆ ทั้งหมดในแผงมาใส่เรียงตามลำดับ (0, 1, 2...)")]
     public Image[] gridButtons; 
 
-    [Header("Sprites (สลับภาพตาม Assets ใหม่)")]
+    [Header("Sprites (สลับภาพตาม Assets)")]
     public Sprite normalWhiteSprite;   
     public Sprite normalYellowSprite;  
     public Sprite glowingWhiteSprite;  
     public Sprite glowingYellowSprite; 
     public Sprite redFailSprite;       
 
-    [Header("Sizes")]
-    // 🟢 ใส่ขนาดเล็กๆ ตามต้องการได้เลยครับ (เช่น 31, 23)
-    public Vector2 defaultSize = new Vector2(31f, 23f); 
-    public Vector2 pressedSize = new Vector2(35f, 27f); 
+    [Header("Juice Animation")]
+    [Tooltip("ความเด้งตอนกด (คูณจากสเกลเดิม เช่น 1.1 เท่าของ 0.26)")]
+    public float popScaleMultiplier = 1.12f; 
+    public float popDuration = 0.12f; 
 
-    [Header("Juice")]
-    public float popDuration = 0.15f; 
-    public float popScale = 1.2f;
-
-    [Header("Minigame Settings")]
+    [Header("Timing & Difficulty Settings (เล่นง่ายขึ้น)")]
+    [Tooltip("ตัวคูณเวลาต่อรอบ (เพิ่มเป็น 1.2 หรือ 1.5 ได้ถ้าต้องการให้นับช้าลง)")]
+    public float timerSpeedMultiplier = 1.0f;
     public int minRounds = 1;                 
-    public int maxRounds = 5;                 
+    public int maxRounds = 4;                 
     public int minPresses = 1;                
-    public int maxPresses = 20; 
-    public float timePerRound;           
-    public float delayBetweenRounds = 0.5f;
+    public int maxPresses = 16; 
+    public float delayBetweenRounds = 0.4f;
 
     [Range(0f, 1f)]
-    public float sameAsLastChance = 0.3f;     
+    public float sameAsLastChance = 0.25f;     
 
-    [Header("Fast Check Settings")]
-    public float autoSubmitDelay = 0.5f;
+    [Header("Auto Submit Settings")]
+    [Tooltip("เวลารอยืนยันหลังกดครบเป้าหมายแล้ว ไม่ต้องรอเวลาหมด")]
+    public float autoSubmitDelay = 0.35f;
 
     private int totalRounds;
     private int currentRound;
@@ -52,19 +50,45 @@ public class MiniGame_PresseInstructed : MonoBehaviour
     private int previousTargetPresses;
 
     private float timer;
+    private float timePerRound;
     private float timeSinceLastPress;
     private bool isRoundActive = false;
+
+    // 🟢 เก็บทั้ง Scale (0.26) และ SizeDelta (87.52, 71.88) เดิมไว้
+    private Vector3[] originalScales;
+    private Vector2[] originalSizes;
 
     public Dialogue dialogManager;
     private static bool hasSeenThisMinigame = false;
 
+    private void Awake()
+    {
+        CacheOriginalTransforms();
+    }
+
+    private void CacheOriginalTransforms()
+    {
+        if (gridButtons != null && gridButtons.Length > 0)
+        {
+            originalScales = new Vector3[gridButtons.Length];
+            originalSizes = new Vector2[gridButtons.Length];
+
+            for (int i = 0; i < gridButtons.Length; i++)
+            {
+                if (gridButtons[i] != null)
+                {
+                    originalScales[i] = gridButtons[i].rectTransform.localScale;
+                    originalSizes[i] = gridButtons[i].rectTransform.sizeDelta;
+                }
+            }
+        }
+    }
+
     private void OnEnable()
     {
-        // 🟢 เปลี่ยนมาเรียก Idle แทน เพื่อไม่ให้เกมเริ่มเองตอนเปิดฉาก 
         IdleMinigame(); 
     }
 
-    // 🟢 โหมดสแตนด์บาย ล้างข้อมูลทุกอย่างให้จอโล่ง 
     public void IdleMinigame()
     {
         isRoundActive = false;
@@ -78,7 +102,7 @@ public class MiniGame_PresseInstructed : MonoBehaviour
     {
         if (gameManager == null)
         {
-            Debug.LogError("ยังไม่ได้ใส่ Game Manager ในหน้าต่าง Inspector ของมินิเกม กด!");
+            Debug.LogError("ยังไม่ได้ใส่ Game Manager ในหน้าต่าง Inspector ของมินิเกม!");
             return; 
         }
 
@@ -90,26 +114,27 @@ public class MiniGame_PresseInstructed : MonoBehaviour
 
         int day = gameManager.currentDay;
 
-        if (day == 1)
+        // ปรับเวลาให้เล่นสบายขึ้น
+        if (day <= 2)
         {
-            totalRounds = 1;
+            totalRounds = Random.Range(minRounds, 3);
             currentRound = 1;
             previousTargetPresses = 0;
-            timePerRound = 10f;
+            timePerRound = 12f * timerSpeedMultiplier;
         }
-        else if (day >= 2 && day <= 5)
+        else if (day >= 3 && day <= 5)
         {
-            totalRounds = Random.Range(minRounds, maxRounds + 1);
+            totalRounds = Random.Range(2, maxRounds + 1);
             currentRound = 1;
             previousTargetPresses = 0;
-            timePerRound = 8f;
+            timePerRound = 10f * timerSpeedMultiplier;
         }
         else if (day >= 6)
         {
-            totalRounds = 4;
+            totalRounds = 3;
             currentRound = 1;
             previousTargetPresses = 0;
-            timePerRound = 5f;
+            timePerRound = 8f * timerSpeedMultiplier;
         }
 
         StartRound();
@@ -125,16 +150,16 @@ public class MiniGame_PresseInstructed : MonoBehaviour
         
         ResetGridVisuals(); 
 
-        if (currentRound > 1 && Random.value <= sameAsLastChance)
+        if (currentRound > 1 && Random.value <= sameAsLastChance && previousTargetPresses > 0)
         {
             targetPresses = previousTargetPresses;
-            instructionText.text = "Press the same number as last time..";
+            if (instructionText != null) instructionText.text = $"Press the same as last ({targetPresses})..";
         }
         else
         {
             int actualMax = Mathf.Min(maxPresses, gridButtons.Length);
             targetPresses = Random.Range(minPresses, actualMax + 1);
-            instructionText.text = "Press " + targetPresses + " Times..";
+            if (instructionText != null) instructionText.text = $"Press {targetPresses} Times..";
         }
 
         isRoundActive = true;
@@ -145,13 +170,22 @@ public class MiniGame_PresseInstructed : MonoBehaviour
         if (!isRoundActive) return;
 
         timer -= Time.deltaTime;
-        timerText.text = Mathf.Ceil(timer).ToString() + "s";
-
-        if (timerBar != null) timerBar.fillAmount = timer / timePerRound;
+        if (timerText != null) timerText.text = Mathf.Ceil(Mathf.Max(timer, 0f)).ToString() + "s";
+        if (timerBar != null) timerBar.fillAmount = Mathf.Clamp01(timer / timePerRound);
 
         if (currentPresses > 0)
         {
             timeSinceLastPress += Time.deltaTime;
+        }
+
+        // กดครบตามเป้า -> รอเวลาสั้นๆ แล้วตัดผ่านทันที
+        if (currentPresses == targetPresses)
+        {
+            if (timeSinceLastPress >= autoSubmitDelay)
+            {
+                CheckRoundResult();
+                return;
+            }
         }
 
         if (Input.GetKeyDown(KeyCode.Space) || Input.GetMouseButtonDown(0))
@@ -159,19 +193,19 @@ public class MiniGame_PresseInstructed : MonoBehaviour
             if (currentPresses < gridButtons.Length)
             {
                 Image targetButton = gridButtons[currentPresses];
-                
-                if (targetButton.sprite == normalWhiteSprite)
+                if (targetButton != null)
                 {
-                    targetButton.sprite = glowingWhiteSprite;
+                    if (targetButton.sprite == normalWhiteSprite)
+                        targetButton.sprite = glowingWhiteSprite;
+                    else if (targetButton.sprite == normalYellowSprite)
+                        targetButton.sprite = glowingYellowSprite;
+
+                    Vector3 baseScale = (originalScales != null && currentPresses < originalScales.Length) 
+                        ? originalScales[currentPresses] 
+                        : targetButton.rectTransform.localScale;
+
+                    StartCoroutine(PopButtonRoutine(targetButton.rectTransform, baseScale));
                 }
-                else if (targetButton.sprite == normalYellowSprite)
-                {
-                    targetButton.sprite = glowingYellowSprite;
-                }
-                
-                // 🟢 นำคำสั่งปรับขนาดกลับมาใช้
-                targetButton.rectTransform.sizeDelta = pressedSize;
-                StartCoroutine(PopButtonRoutine(targetButton.rectTransform));
             }
 
             currentPresses++;
@@ -193,48 +227,56 @@ public class MiniGame_PresseInstructed : MonoBehaviour
     private void ResetGridVisuals()
     {
         if (gridButtons == null) return;
+        if (originalScales == null || originalScales.Length == 0) CacheOriginalTransforms();
         
-        foreach (Image btn in gridButtons)
+        for (int i = 0; i < gridButtons.Length; i++)
         {
+            Image btn = gridButtons[i];
             if (btn != null)
             {
                 btn.sprite = Random.value > 0.5f ? normalWhiteSprite : normalYellowSprite;
-                btn.rectTransform.sizeDelta = defaultSize; // 🟢 คืนค่าขนาดตั้งต้น
-                btn.rectTransform.localScale = Vector3.one; 
+
+                // 🟢 คืนค่า Scale เดิม (0.26) และ SizeDelta (87.52, 71.88) ตามหน้า Editor ไม่ขยายบวมเป็น 1.0
+                if (originalScales != null && i < originalScales.Length)
+                    btn.rectTransform.localScale = originalScales[i];
+
+                if (originalSizes != null && i < originalSizes.Length)
+                    btn.rectTransform.sizeDelta = originalSizes[i];
             }
         }
     }
 
-    private IEnumerator PopButtonRoutine(RectTransform btnRect)
+    // 🟢 แอนิเมชันเด้งอิงตาม Base Scale เดิม (0.26)
+    private IEnumerator PopButtonRoutine(RectTransform btnRect, Vector3 baseScale)
     {
         float elapsed = 0f;
         while (elapsed < popDuration)
         {
             elapsed += Time.deltaTime;
             float t = elapsed / popDuration;
-            float currentScale = Mathf.Lerp(1f, popScale, Mathf.PingPong(t * 2f, 1f));
-            btnRect.localScale = new Vector3(currentScale, currentScale, 1f);
+            float scaleMultiplier = Mathf.Lerp(1f, popScaleMultiplier, Mathf.PingPong(t * 2f, 1f));
+            btnRect.localScale = baseScale * scaleMultiplier;
             yield return null;
         }
-        btnRect.localScale = Vector3.one;
+        btnRect.localScale = baseScale;
     }
 
     private void CheckRoundResult()
     {
         isRoundActive = false;
-        timerText.text = "0s";
+        if (timerText != null) timerText.text = "0s";
         if (timerBar != null) timerBar.fillAmount = 0f;
 
         if (currentPresses == targetPresses)
         {
             if (currentRound >= totalRounds)
             {
-                instructionText.text = "Pass";
+                if (instructionText != null) instructionText.text = "PASS";
                 StartCoroutine(EndMinigameRoutine(true));
             }
             else
             {
-                instructionText.text = "....";
+                if (instructionText != null) instructionText.text = "OK...";
                 previousTargetPresses = targetPresses;
                 currentRound++;
                 StartCoroutine(WaitAndStartNextRound());
@@ -244,13 +286,14 @@ public class MiniGame_PresseInstructed : MonoBehaviour
         {
             for (int i = 0; i < currentPresses; i++)
             {
-                if (i < gridButtons.Length) gridButtons[i].sprite = redFailSprite;
+                if (i < gridButtons.Length && gridButtons[i] != null) 
+                    gridButtons[i].sprite = redFailSprite;
             }
 
             if (currentPresses > targetPresses)
-                instructionText.text = "OVERLOAD! You pressed " + currentPresses + " / " + targetPresses;
+                instructionText.text = $"OVERLOAD! ({currentPresses}/{targetPresses})";
             else
-                instructionText.text = "FAIL! You pressed " + currentPresses + " / " + targetPresses;
+                instructionText.text = $"TIME OUT! ({currentPresses}/{targetPresses})";
 
             StartCoroutine(EndMinigameRoutine(false)); 
         }
@@ -264,7 +307,7 @@ public class MiniGame_PresseInstructed : MonoBehaviour
 
     private IEnumerator EndMinigameRoutine(bool isSuccess)
     {
-        yield return new WaitForSeconds(0.8f);
+        yield return new WaitForSeconds(0.6f);
 
         if (gameManager != null)
         {

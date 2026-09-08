@@ -245,7 +245,7 @@ public class MiniGameHold : MonoBehaviour
     {
         isGameActive = false;
         if (timerText != null) timerText.text = "0s";
-        if (instructionText != null) instructionText.text = "success.. in this time.";
+        if (instructionText != null) instructionText.text = "success";
 
         if (buttonVisual != null) buttonVisual.localScale = originalButtonScale;
         StartCoroutine(EndMinigameRoutine(true));
@@ -254,7 +254,7 @@ public class MiniGameHold : MonoBehaviour
     private void LoseGame()
     {
         isGameActive = false;
-        if (instructionText != null) instructionText.text = "You failed.";
+        if (instructionText != null) instructionText.text = "You failed";
 
         if (buttonVisual != null) buttonVisual.localScale = originalButtonScale;
         StartCoroutine(EndMinigameRoutine(false));
