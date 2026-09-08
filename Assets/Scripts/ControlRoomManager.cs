@@ -15,6 +15,7 @@ public class ControlRoomManager : MonoBehaviour
     private bool hasPlayedIntro = false;
     private bool hasTakenFirstMeds = false;
     private bool hasEnteredFirstMinigame = false;
+    private bool hasLostFirstSanity = false;
 
     [Header("Debug / Cheat Mode")]
     public bool enableCheatMode = true; 
@@ -744,6 +745,8 @@ public class ControlRoomManager : MonoBehaviour
         TriggerShake();
         StartCoroutine(FlashDamageScreen()); 
         if (AudioManager.Instance != null) AudioManager.Instance.PlaySFX("explosionSound");
+
+        PlaySanityLossDialog();
         UpdateSanityUI();
         CheckGameOver();
         if (isGameActive) TriggerRespawn(redZone, initialRedWidth, greenZone, 2, false, true);
@@ -924,6 +927,7 @@ public class ControlRoomManager : MonoBehaviour
             TriggerShake();
             StartCoroutine(FlashDamageScreen()); 
             if (AudioManager.Instance != null) AudioManager.Instance.PlaySFX("missSound");
+            PlaySanityLossDialog();
             StartCoroutine(FadeOutAndHideRoutine(yellowZone, 3));
             UpdateSanityUI();
             CheckGameOver();
@@ -954,6 +958,8 @@ public class ControlRoomManager : MonoBehaviour
                 "That helps a lot.",
                 "Much better.",
                 "My mind feels so much clearer now."};
+
+                    dialogManager.StartDialog("Me", new string[] { genericMeds[Random.Range(0, genericMeds.Length)] });
                 }
             }
         }
@@ -969,6 +975,7 @@ public class ControlRoomManager : MonoBehaviour
             TriggerShake();
             StartCoroutine(FlashDamageScreen()); 
             if (AudioManager.Instance != null) AudioManager.Instance.PlaySFX("missSound");
+            PlaySanityLossDialog();
         }
 
         UpdateSanityUI();
@@ -1103,7 +1110,9 @@ public class ControlRoomManager : MonoBehaviour
         {
             currentSanity -= isTutorialPhase ? 1 : sanityDamage;
             TriggerShake();
-            StartCoroutine(FlashDamageScreen()); 
+            StartCoroutine(FlashDamageScreen());
+
+            PlaySanityLossDialog();
         }
         
         UpdateSanityUI();
@@ -1522,6 +1531,28 @@ public class ControlRoomManager : MonoBehaviour
         if (lines != null)
         {
             dialogManager.StartDialog("Me", lines);
+        }
+    }
+
+    private void PlaySanityLossDialog()
+    {
+        if (dialogManager == null) return;
+
+        if (!hasLostFirstSanity)
+        {       
+            dialogManager.StartDialog("Me", new string[] { "Ugh... my head hurts" });
+            hasLostFirstSanity = true;
+        }
+        else
+        {
+            
+            string[] sanityLossLines = {
+            "Focus, damn it!", 
+            "These alarms are driving me crazy.", 
+            "This is bad...", 
+            "I can't take this!" 
+        };
+            dialogManager.StartDialog("Me", new string[] { sanityLossLines[Random.Range(0, sanityLossLines.Length)] });
         }
     }
 
