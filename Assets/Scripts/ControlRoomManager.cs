@@ -10,6 +10,12 @@ using UnityEngine.Rendering.Universal;
 
 public class ControlRoomManager : MonoBehaviour
 {
+    [Header("Dialog System")]
+    public Dialogue dialogManager;
+    private bool hasPlayedIntro = false;
+    private bool hasTakenFirstMeds = false;
+    private bool hasEnteredFirstMinigame = false;
+
     [Header("Debug / Cheat Mode")]
     public bool enableCheatMode = true; 
 
@@ -259,6 +265,7 @@ public class ControlRoomManager : MonoBehaviour
         if (AudioManager.Instance != null) AudioManager.Instance.PlayAmbient("ambientLoop");
         
         ShowNotification("DAY " + currentDay + "\nSURVIVE THE MELTDOWN", "TIP: Press Space on GREEN to heal, RED to engage minigame.");
+        PlayDailyIntroDialog(currentDay);
     }
 
     void Update()
@@ -667,6 +674,8 @@ public class ControlRoomManager : MonoBehaviour
 
         isGameActive = true;
         ShowNotification("DAY " + currentDay, "TIP: The system is getting faster. Stay focused.");
+
+        PlayDailyIntroDialog(currentDay);
     }
 
     private void UpdateDayUI() { if (dayText != null) dayText.text = "Day: " + currentDay + "/" + maxDays; }
@@ -951,6 +960,11 @@ public class ControlRoomManager : MonoBehaviour
 
     private void EnterMinigame()
     {
+        if (!hasEnteredFirstMinigame && dialogManager != null)
+        {
+            dialogManager.StartDialog("Me", new string[] { "Here we go. Let's see what we're dealing with." });
+            hasEnteredFirstMinigame = true;
+        }
         isMinigameActive = true;
         StopGlitchImmediately();
 
@@ -1424,6 +1438,71 @@ public class ControlRoomManager : MonoBehaviour
             yield return null;
         }
         shakeTarget.localPosition = originalShakePos;
+    }
+
+    private void PlayDailyIntroDialog(int day)
+    {
+        if (dialogManager == null) return;
+
+        string[] lines = null;
+
+        switch (day)
+        {
+            case 1:
+                if (!hasPlayedIntro)
+                {
+                    lines = new string[] {
+                    "Dammit. I ended up coming back here again.",
+                    "Even though I swore I'd never step foot in this place again.",
+                    "What choice do I have? I need the cash.",
+                    "I swear, this is the last time. Alright... just 7 days."
+                };
+                    hasPlayedIntro = true;
+                }
+                break;
+            case 2:
+                lines = new string[] {
+                "Day 2. My head is pounding.",
+                "Let's just get this over with."
+            };
+                break;
+            case 3:
+                lines = new string[] {
+                "Third day.",
+                "The system is getting more unstable. Or maybe it's just me."
+            };
+                break;
+            case 4:
+                lines = new string[] {
+                "Day 4. Halfway there.",
+                "Just keep the core from melting. Simple, right?"
+            };
+                break;
+            case 5:
+                lines = new string[] {
+                "Day 5.",
+                "The noises in this room are driving me crazy."
+            };
+                break;
+            case 6:
+                lines = new string[] {
+                "Day 6. Almost done.",
+                "Just one more day after this. Don't screw up now."
+            };
+                break;
+            case 7:
+                lines = new string[] {
+                "Day 7. The last day.",
+                "Let's finish this and get the hell out of here."
+            };
+                break;
+        }
+
+        // ถ้ามีบทพูดในวันนั้นๆ ให้เรียก DialogManager
+        if (lines != null)
+        {
+            dialogManager.StartDialog("Me", lines);
+        }
     }
 
     private IEnumerator HitPauseRoutine()
