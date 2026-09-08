@@ -174,12 +174,7 @@ public class MiniGame_PresseInstructed : MonoBehaviour
                 return;
             }
         }
-
-        if (currentPresses == targetPresses && timeSinceLastPress > autoSubmitDelay)
-        {
-            CheckRoundResult();
-        }
-
+        
         if (timer <= 0)
         {
             CheckRoundResult();
