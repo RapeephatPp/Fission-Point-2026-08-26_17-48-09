@@ -47,6 +47,12 @@ public class ControlRoomManager : MonoBehaviour
     public float restartTypewriterSpeed = 0.055f;
     public float restartTextJitterIntensity = 2.5f;
 
+    [Header("Story Typewriter Audio")]
+    public AudioClip storyTypeSound;
+    [Range(0.8f, 1.2f)] public float storyTypeMinPitch = 0.95f;
+    [Range(0.8f, 1.2f)] public float storyTypeMaxPitch = 1.05f;
+    private AudioSource storyAudioSource;
+
     [Header("URP Post-Processing (Juice)")]
     public Volume globalVolume;
     private ChromaticAberration chromaticAberration;
@@ -222,6 +228,16 @@ public class ControlRoomManager : MonoBehaviour
     private Coroutine movingZonesCoroutine;
     private Coroutine restartTextShakeCoroutine;
     private Coroutine lightFlickerCoroutine;
+
+    private void Awake()
+    {
+        storyAudioSource = GetComponent<AudioSource>();
+        if (storyAudioSource == null)
+        {
+            storyAudioSource = gameObject.AddComponent<AudioSource>();
+            storyAudioSource.playOnAwake = false;
+        }
+    }
 
     void Start()
     {
@@ -846,6 +862,7 @@ public class ControlRoomManager : MonoBehaviour
     private void HandleGreenLifeTime()
     {
         if (isGreenSpawning || greenZone.rect.width <= 0) return;
+        if (dialogManager != null && dialogManager.IsDialogActive) return;
         greenTimer += Time.deltaTime;
         
         float lifeTime = isTutorialPhase ? greenLifeTime * 2f : greenLifeTime;
@@ -856,6 +873,11 @@ public class ControlRoomManager : MonoBehaviour
     {
         float currentGreenShrink = isTutorialPhase ? greenShrinkRate * 0.3f : greenShrinkRate;
         float currentRedShrink = isTutorialPhase ? redShrinkRate * 0.3f : redShrinkRate;
+
+        if (dialogManager != null && dialogManager.IsDialogActive)
+        {
+            currentRedShrink *= 0.2f; // ชะลอการหดตัวของ Red Zone ลง 80% ระหว่างมีบทสนทนา
+        }
 
         if (!isGreenSpawning && greenZone.rect.width > minGreenWidth)
         {
@@ -1515,7 +1537,28 @@ public class ControlRoomManager : MonoBehaviour
         for (int i = 0; i <= fullText.Length; i++)
         {
             targetText.maxVisibleCharacters = i;
+            if (i > 0 && i <= fullText.Length)
+            {
+                char c = fullText[i - 1];
+                if (!char.IsWhiteSpace(c))
+                {
+                    PlayStoryTypeSound();
+                }
+            }
             yield return new WaitForSecondsRealtime(speed);
+        }
+    }
+
+    private void PlayStoryTypeSound()
+    {
+        if (storyTypeSound != null && storyAudioSource != null)
+        {
+            storyAudioSource.pitch = Random.Range(storyTypeMinPitch, storyTypeMaxPitch);
+            storyAudioSource.PlayOneShot(storyTypeSound);
+        }
+        else if (AudioManager.Instance != null)
+        {
+            AudioManager.Instance.PlaySFX("clickSound");
         }
     }
 

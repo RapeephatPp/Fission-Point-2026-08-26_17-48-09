@@ -6,6 +6,7 @@ public class TMPTypingSound : MonoBehaviour
     private TMP_Text tmpText;
     private AudioSource audioSource;
     private int lastTextLength;
+    private int lastMaxVisible;
 
     [Header("Typing Sound Settings")]
     public AudioClip typeSound;
@@ -16,6 +17,11 @@ public class TMPTypingSound : MonoBehaviour
     {
         tmpText = GetComponent<TMP_Text>();
         audioSource = GetComponent<AudioSource>();
+        if (audioSource == null)
+        {
+            audioSource = gameObject.AddComponent<AudioSource>();
+            audioSource.playOnAwake = false;
+        }
     }
 
     private void Start()
@@ -23,6 +29,7 @@ public class TMPTypingSound : MonoBehaviour
         if (tmpText != null)
         {
             lastTextLength = tmpText.text.Length;
+            lastMaxVisible = tmpText.maxVisibleCharacters;
         }
     }
 
@@ -33,12 +40,31 @@ public class TMPTypingSound : MonoBehaviour
         int currentLength = tmpText.text.Length;
 
         // เล่นเสียงเมื่อมีตัวอักษรเพิ่มขึ้นมา
-        if (currentLength > lastTextLength)
+        int currentMaxVisible = tmpText.maxVisibleCharacters;
+
+        bool textLengthIncreased = currentLength > lastTextLength;
+        bool maxVisibleIncreased = currentMaxVisible > lastMaxVisible && currentMaxVisible <= currentLength;
+
+        if (textLengthIncreased || maxVisibleIncreased)
         {
-            PlayTypingSound();
+            char lastChar = ' ';
+            if (maxVisibleIncreased && currentMaxVisible > 0 && currentMaxVisible <= currentLength)
+            {
+                lastChar = tmpText.text[currentMaxVisible - 1];
+            }
+            else if (textLengthIncreased && currentLength > 0)
+            {
+                lastChar = tmpText.text[currentLength - 1];
+            }
+
+            if (!char.IsWhiteSpace(lastChar))
+            {
+                PlayTypingSound();
+            }
         }
 
         lastTextLength = currentLength;
+        lastMaxVisible = currentMaxVisible;
     }
 
     private void PlayTypingSound()
@@ -55,6 +81,10 @@ public class TMPTypingSound : MonoBehaviour
         else if (audioSource.clip != null)
         {
             audioSource.PlayOneShot(audioSource.clip);
+        }
+        else if (AudioManager.Instance != null)
+        {
+            AudioManager.Instance.PlaySFX("clickSound");
         }
     }
 }

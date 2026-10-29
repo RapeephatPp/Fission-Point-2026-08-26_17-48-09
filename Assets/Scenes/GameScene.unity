@@ -282,8 +282,8 @@ AudioSource:
   serializedVersion: 4
   OutputAudioMixerGroup: {fileID: 0}
   m_audioClip: {fileID: 0}
-  m_Resource: {fileID: 8300000, guid: 7fe449f2fc6a2224d938a3ae05c8e022, type: 3}
-  m_PlayOnAwake: 1
+  m_Resource: {fileID: 8300000, guid: f4ad9284c18d33445831b5cce61695d7, type: 3}
+  m_PlayOnAwake: 0
   m_Volume: 0.071
   m_Pitch: 1
   Loop: 0
@@ -380,7 +380,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a19fe8d04d55ca6409d4b51e23a92cea, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TMPTypingSound
-  typeSound: {fileID: 0}
+  typeSound: {fileID: 8300000, guid: 4a4d108080db37e48b74fd2456665d8e, type: 3}
   minPitch: 0.9
   maxPitch: 1.1
 --- !u!1 &20638956
@@ -1355,8 +1355,8 @@ AudioSource:
   serializedVersion: 4
   OutputAudioMixerGroup: {fileID: 0}
   m_audioClip: {fileID: 0}
-  m_Resource: {fileID: 8300000, guid: d19f186d14eb00d49b82a55e30e32c1e, type: 3}
-  m_PlayOnAwake: 1
+  m_Resource: {fileID: 8300000, guid: f4ad9284c18d33445831b5cce61695d7, type: 3}
+  m_PlayOnAwake: 0
   m_Volume: 1
   m_Pitch: 1
   Loop: 0
@@ -1603,8 +1603,8 @@ AudioSource:
   serializedVersion: 4
   OutputAudioMixerGroup: {fileID: 0}
   m_audioClip: {fileID: 0}
-  m_Resource: {fileID: 8300000, guid: d19f186d14eb00d49b82a55e30e32c1e, type: 3}
-  m_PlayOnAwake: 1
+  m_Resource: {fileID: 8300000, guid: f4ad9284c18d33445831b5cce61695d7, type: 3}
+  m_PlayOnAwake: 0
   m_Volume: 0.083
   m_Pitch: 1
   Loop: 0
@@ -3817,8 +3817,8 @@ AudioSource:
   serializedVersion: 4
   OutputAudioMixerGroup: {fileID: 0}
   m_audioClip: {fileID: 0}
-  m_Resource: {fileID: 8300000, guid: d19f186d14eb00d49b82a55e30e32c1e, type: 3}
-  m_PlayOnAwake: 1
+  m_Resource: {fileID: 8300000, guid: f4ad9284c18d33445831b5cce61695d7, type: 3}
+  m_PlayOnAwake: 0
   m_Volume: 1
   m_Pitch: 1
   Loop: 0
@@ -5726,6 +5726,9 @@ MonoBehaviour:
   dialogPanel: {fileID: 651333690}
   speakerText: {fileID: 834754160}
   dialogText: {fileID: 173907211}
+  talkSound: {fileID: 8300000, guid: f4ad9284c18d33445831b5cce61695d7, type: 3}
+  minPitch: 0.95
+  maxPitch: 1.05
   typeSpeed: 0.04
   autoAdvanceDelay: 2
 --- !u!4 &1059394604
@@ -6986,8 +6989,8 @@ AudioSource:
   serializedVersion: 4
   OutputAudioMixerGroup: {fileID: 0}
   m_audioClip: {fileID: 0}
-  m_Resource: {fileID: 8300000, guid: 7fe449f2fc6a2224d938a3ae05c8e022, type: 3}
-  m_PlayOnAwake: 1
+  m_Resource: {fileID: 8300000, guid: f4ad9284c18d33445831b5cce61695d7, type: 3}
+  m_PlayOnAwake: 0
   m_Volume: 0.071
   m_Pitch: 1
   Loop: 0
@@ -7096,7 +7099,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a19fe8d04d55ca6409d4b51e23a92cea, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TMPTypingSound
-  typeSound: {fileID: 0}
+  typeSound: {fileID: 8300000, guid: 4a4d108080db37e48b74fd2456665d8e, type: 3}
   minPitch: 0.9
   maxPitch: 1.1
 --- !u!114 &1381668192
@@ -8664,6 +8667,9 @@ MonoBehaviour:
   storyTypewriterSpeed: 0.035
   restartTypewriterSpeed: 0.055
   restartTextJitterIntensity: 2.5
+  storyTypeSound: {fileID: 8300000, guid: 4a4d108080db37e48b74fd2456665d8e, type: 3}
+  storyTypeMinPitch: 0.95
+  storyTypeMaxPitch: 1.05
   globalVolume: {fileID: 531924925}
   minigameFocusLensDistortion: 0.22
   minigameFocusVignette: 0.48
@@ -9235,7 +9241,7 @@ MonoBehaviour:
   sfxLibrary:
   - key: clickSound
     clip: {fileID: 8300000, guid: 4a4d108080db37e48b74fd2456665d8e, type: 3}
-    volume: 0.299
+    volume: 0.15
   - key: hitSound
     clip: {fileID: 8300000, guid: 9857dde363061c54b996665eb0570b05, type: 3}
     volume: 0.11
@@ -11166,8 +11172,8 @@ AudioSource:
   serializedVersion: 4
   OutputAudioMixerGroup: {fileID: 0}
   m_audioClip: {fileID: 0}
-  m_Resource: {fileID: 8300000, guid: 7fe449f2fc6a2224d938a3ae05c8e022, type: 3}
-  m_PlayOnAwake: 1
+  m_Resource: {fileID: 8300000, guid: f4ad9284c18d33445831b5cce61695d7, type: 3}
+  m_PlayOnAwake: 0
   m_Volume: 0.071
   m_Pitch: 1
   Loop: 0
@@ -11264,7 +11270,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a19fe8d04d55ca6409d4b51e23a92cea, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TMPTypingSound
-  typeSound: {fileID: 8300000, guid: d19f186d14eb00d49b82a55e30e32c1e, type: 3}
+  typeSound: {fileID: 8300000, guid: 4a4d108080db37e48b74fd2456665d8e, type: 3}
   minPitch: 0.9
   maxPitch: 1.1
 --- !u!1 &2067578627
