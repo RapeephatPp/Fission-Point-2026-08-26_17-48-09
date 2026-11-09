@@ -1591,7 +1591,7 @@ public class ControlRoomManager : MonoBehaviour
         eventBorderImage.color = c;
     }
 
-    private void ShowNotification(string message, string tip = "")
+    public void ShowNotification(string message, string tip = "")
     {
         ParseTipText(tip, out string title, out string body);
         ShowNotification(message, title, body);

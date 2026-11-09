@@ -1,0 +1,5 @@
+key,type,value
+eventSettings_snow,bool,false
+active_festival,string,none
+particle_intensity,float,0
+festival_greeting,string,""

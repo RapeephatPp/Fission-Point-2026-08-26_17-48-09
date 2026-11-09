@@ -1,0 +1,13 @@
+{
+  "$schema": "https://ugs-config-schemas.unity3d.com/v1/remote-config.schema.json",
+  "entries": {
+    "active_festival": "none",
+    "particle_intensity": 0.0,
+    "festival_greeting": ""
+  },
+  "types": {
+    "active_festival": "STRING",
+    "particle_intensity": "FLOAT",
+    "festival_greeting": "STRING"
+  }
+}
