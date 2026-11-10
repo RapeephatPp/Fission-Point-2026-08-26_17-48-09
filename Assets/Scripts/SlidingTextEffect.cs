@@ -44,7 +44,7 @@ public class SlidingTextEffect : MonoBehaviour
         originalPos = rectTransform.anchoredPosition;
 
         // ป้องกันข้อความตัดขึ้นบรรทัดใหม่ขณะสไลด์
-        tmpText.enableWordWrapping = false;
+        tmpText.textWrappingMode = TextWrappingModes.NoWrap;
         tmpText.overflowMode = TextOverflowModes.Overflow;
 
         InitializeZone();

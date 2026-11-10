@@ -73,12 +73,12 @@ public class ChristmasRemoteConfigManager : MonoBehaviour
     {
         if (particleController == null)
         {
-            particleController = FindFirstObjectByType<SnowParticleController>();
+            particleController = FindAnyObjectByType<SnowParticleController>();
         }
 
         if (controlRoomManager == null)
         {
-            controlRoomManager = FindFirstObjectByType<ControlRoomManager>();
+            controlRoomManager = FindAnyObjectByType<ControlRoomManager>();
         }
     }
 

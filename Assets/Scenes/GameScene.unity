@@ -1083,7 +1083,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 832185199461053250, guid: d9ca586a845df8e43a5965c717f200bf, type: 3}
       propertyPath: m_IsActive
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 5057241264913053958, guid: d9ca586a845df8e43a5965c717f200bf, type: 3}
       propertyPath: m_Camera
@@ -1184,7 +1184,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &133897834
 RectTransform:
   m_ObjectHideFlags: 0
@@ -3308,6 +3308,7 @@ RectTransform:
   - {fileID: 579946701}
   - {fileID: 133897834}
   - {fileID: 1717131431}
+  - {fileID: 882233442}
   m_Father: {fileID: 20638960}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
@@ -9898,6 +9899,146 @@ Material:
     - _SoftParticleFadeParams: {r: 0, g: 0, b: 0, a: 0}
   m_BuildTextureStacks: []
   m_AllowLocking: 1
+--- !u!1 &882233441
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 882233442}
+  - component: {fileID: 882233443}
+  - component: {fileID: 882233445}
+  - component: {fileID: 882233444}
+  - component: {fileID: 882233446}
+  m_Layer: 5
+  m_Name: MinigameHighlightBorder
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &882233442
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 882233441}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 532456013}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: 311.4, y: -108}
+  m_SizeDelta: {x: 193.1, y: 139.6}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!225 &882233443
+CanvasGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 882233441}
+  m_Enabled: 1
+  m_Alpha: 1
+  m_Interactable: 0
+  m_BlocksRaycasts: 0
+  m_IgnoreParentGroups: 0
+--- !u!114 &882233444
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 882233441}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d1e2f3a4b5c6789012345678abcdef01, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MinigameSimpleBorder
+  borderMaterial: {fileID: 2100000, guid: 5b1f3c7e4d8a9012345678abcdef0102, type: 2}
+  borderThickness: 2
+  cornerRadius: 0
+  glowPadding: 0
+  glowSpread: 1.5
+  glowIntensity: 0.9
+  enablePulse: 1
+  pulseSpeed: 4
+  minPulseAlpha: 0.65
+  maxPulseAlpha: 1
+  animatedDashIntensity: 0.4
+  dashSpeed: 1.5
+  defaultBorderColor: {r: 1, g: 0.85, b: 0.1, a: 1}
+  profiles:
+  - minigameName: Hold (Center Screen)
+    minigamePanel: {fileID: 1243543564}
+    referenceTransform: {fileID: 1243543565}
+    anchoredPosition: {x: 14.4, y: -88.1}
+    size: {x: 348, y: 174.7}
+    borderColor: {r: 1, g: 0.85, b: 0.1, a: 1}
+  - minigameName: Radar (Top Screen)
+    minigamePanel: {fileID: 526754393}
+    referenceTransform: {fileID: 526754394}
+    anchoredPosition: {x: -360.45, y: -88.1}
+    size: {x: 315.7, y: 176.1}
+    borderColor: {r: 1, g: 0.85, b: 0.1, a: 1}
+  - minigameName: Mash (Right Button)
+    minigamePanel: {fileID: 656496418}
+    referenceTransform: {fileID: 656496419}
+    anchoredPosition: {x: 308.6, y: -245.6}
+    size: {x: 127.6, y: 121.1}
+    borderColor: {r: 1, g: 0.85, b: 0.1, a: 1}
+  - minigameName: Press (Keypad Grid)
+    minigamePanel: {fileID: 332375700}
+    referenceTransform: {fileID: 332375701}
+    anchoredPosition: {x: 311.4, y: -108}
+    size: {x: 193.1, y: 139.6}
+    borderColor: {r: 1, g: 0.85, b: 0.1, a: 1}
+  activeProfileIndex: 3
+--- !u!114 &882233445
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 882233441}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
+  m_Material: {fileID: 2100000, guid: 5b1f3c7e4d8a9012345678abcdef0102, type: 2}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_RaycastTarget: 0
+  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
+  m_Maskable: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  m_Sprite: {fileID: 0}
+  m_Type: 0
+  m_PreserveAspect: 0
+  m_FillCenter: 1
+  m_FillMethod: 4
+  m_FillAmount: 1
+  m_FillClockwise: 1
+  m_FillOrigin: 0
+  m_UseSpriteMesh: 0
+  m_PixelsPerUnitMultiplier: 1
+--- !u!222 &882233446
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 882233441}
+  m_CullTransparentMesh: 1
 --- !u!1 &906587927
 GameObject:
   m_ObjectHideFlags: 0
@@ -13672,6 +13813,7 @@ MonoBehaviour:
   - {fileID: 1243543564}
   - {fileID: 656496418}
   - {fileID: 526754393}
+  minigameBorder: {fileID: 882233444}
   cursorSpeed: 500
   startPointX: -650
   endPointX: 650

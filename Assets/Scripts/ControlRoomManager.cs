@@ -123,6 +123,7 @@ public class ControlRoomManager : MonoBehaviour
 
     [Header("Minigame System")]
     public GameObject[] minigamePanels; 
+    public MinigameSimpleBorder minigameBorder;
     private GameObject currentActiveMinigame; 
 
     [Header("Settings")]
@@ -236,6 +237,11 @@ public class ControlRoomManager : MonoBehaviour
         {
             storyAudioSource = gameObject.AddComponent<AudioSource>();
             storyAudioSource.playOnAwake = false;
+        }
+
+        if (minigameBorder == null)
+        {
+            minigameBorder = FindAnyObjectByType<MinigameSimpleBorder>();
         }
     }
 
@@ -1208,6 +1214,11 @@ public class ControlRoomManager : MonoBehaviour
             targetContainerPos = originalContainerPos - (Vector2)targetLocalPos * zoomScale;
         }
 
+        if (minigameBorder != null && currentActiveMinigame != null)
+        {
+            minigameBorder.ShowBorder(currentActiveMinigame);
+        }
+
         Vector2 startMainPos = mainGameElements != null ? mainGameElements.anchoredPosition : Vector2.zero;
         Vector2 targetMainPos = originalMainGamePos + new Vector2(0, mainGameSlideOffset);
 
@@ -1259,6 +1270,11 @@ public class ControlRoomManager : MonoBehaviour
     {
         float elapsed = 0f;
         float duration = zoomDuration;
+
+        if (minigameBorder != null)
+        {
+            minigameBorder.HideBorder();
+        }
 
         if (AudioManager.Instance != null) AudioManager.Instance.PlaySFX(isSuccess ? "minigameWinSound" : "minigameLoseSound");
 
