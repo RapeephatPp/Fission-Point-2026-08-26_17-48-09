@@ -23,6 +23,26 @@ public class MinigameSimpleBorder : MonoBehaviour
         public Color borderColor = new Color(1.0f, 0.85f, 0.1f, 1.0f); // Warning Yellow
     }
 
+    [Header("Blink & Auto Fade-Out (กะพริบนำสายตาแล้วดับ)")]
+    [Tooltip("เปิดใช้งานโหมดกะพริบเตือนแล้วค่อยๆ ดับหายไปเอง")]
+    public bool autoFadeOut = true;
+    [Tooltip("จำนวนครั้งที่ให้กะพริบเตือน (ค่าแนะนำ: 2 - 3 ครั้ง)")]
+    [Range(1, 5)] public int blinkCount = 3;
+
+    [Header("Smooth Blink Timing (จังหวะเวลานุ่มนวล)")]
+    [Tooltip("หน่วงเวลาก่อนเริ่มกะพริบ เพื่อให้กล้องซูมห้องควบคุมเข้าที่ก่อน (วินาที)")]
+    [Range(0f, 0.5f)] public float startDelay = 0.15f;
+    [Tooltip("ระยะเวลาสว่างขึ้นแบบ Ease-In-Out ในแต่ละครั้ง (วินาที)")]
+    [Range(0.08f, 0.4f)] public float flashInDuration = 0.18f;
+    [Tooltip("ระยะเวลาค้างสว่างที่จุดสูงสุด (วินาที)")]
+    [Range(0f, 0.25f)] public float flashHoldDuration = 0.06f;
+    [Tooltip("ระยะเวลาหรี่ลงแบบ Ease-In-Out ในแต่ละครั้ง (วินาที)")]
+    [Range(0.08f, 0.4f)] public float flashOutDuration = 0.18f;
+    [Tooltip("ระยะเวลาค่อยๆ ละลายจางหายไปครั้งสุดท้าย (วินาที)")]
+    [Range(0.15f, 1.0f)] public float finalFadeOutDuration = 0.40f;
+    [Tooltip("ความสว่างต่ำสุดระหว่างแต่ละจังหวะกะพริบ")]
+    [Range(0.0f, 0.5f)] public float minBlinkAlpha = 0.20f;
+
     [Header("Shader Material")]
     public Material borderMaterial;
 
@@ -38,7 +58,7 @@ public class MinigameSimpleBorder : MonoBehaviour
     [Tooltip("ความสว่างของแสงเรือง")]
     [Range(0f, 2f)] public float glowIntensity = 0.9f;
 
-    [Header("Animation Settings")]
+    [Header("Continuous Pulse (ใช้เมื่อปิด Auto Fade-Out)")]
     public bool enablePulse = true;
     [Range(0f, 10f)] public float pulseSpeed = 4.0f;
     [Range(0.2f, 1f)] public float minPulseAlpha = 0.65f;
@@ -102,7 +122,7 @@ public class MinigameSimpleBorder : MonoBehaviour
     }
 
     /// <summary>
-    /// สั่งแสดงกรอบไฮไลต์ตามมินิเกมที่ระบุ
+    /// สั่งแสดงกรอบไฮไลต์ตามมินิเกมที่ระบุ (กะพริบนำสายตาอย่างนุ่มนวลแล้วดับ)
     /// </summary>
     public void ShowBorder(GameObject minigameObj)
     {
@@ -114,26 +134,142 @@ public class MinigameSimpleBorder : MonoBehaviour
         int profileIdx = FindProfileIndex(minigameObj);
         ApplyProfile(profileIdx);
 
-        if (fadeCoroutine != null) StopCoroutine(fadeCoroutine);
-        fadeCoroutine = StartCoroutine(FadeRoutine(1f, 0.25f));
+        if (fadeCoroutine != null)
+        {
+            StopCoroutine(fadeCoroutine);
+            fadeCoroutine = null;
+        }
+
+        if (gameObject.activeInHierarchy)
+        {
+            if (autoFadeOut)
+            {
+                fadeCoroutine = StartCoroutine(BlinkSequenceRoutine());
+            }
+            else
+            {
+                fadeCoroutine = StartCoroutine(FadeRoutine(1f, 0.25f));
+            }
+        }
+        else
+        {
+            if (canvasGroup != null) canvasGroup.alpha = 1f;
+        }
     }
 
     /// <summary>
-    /// สั่งซ่อนกรอบไฮไลต์เมื่อเล่นจบ
+    /// สั่งเริ่มแอนิเมชันกะพริบสำหรับ Preview
+    /// </summary>
+    public void PlayBlinkPreview()
+    {
+        EnsureBorderUI();
+        gameObject.SetActive(true);
+        if (fadeCoroutine != null)
+        {
+            StopCoroutine(fadeCoroutine);
+            fadeCoroutine = null;
+        }
+        if (gameObject.activeInHierarchy)
+        {
+            fadeCoroutine = StartCoroutine(BlinkSequenceRoutine());
+        }
+    }
+
+    /// <summary>
+    /// สั่งซ่อนกรอบไฮไลต์อย่างนุ่มนวลเมื่อเล่นจบ
     /// </summary>
     public void HideBorder()
     {
-        if (fadeCoroutine != null) StopCoroutine(fadeCoroutine);
-        fadeCoroutine = StartCoroutine(FadeRoutine(0f, 0.2f, () =>
+        if (fadeCoroutine != null)
+        {
+            StopCoroutine(fadeCoroutine);
+            fadeCoroutine = null;
+        }
+
+        if (!gameObject.activeInHierarchy)
+        {
+            if (canvasGroup != null) canvasGroup.alpha = 0f;
+            activeProfileIndex = -1;
+            return;
+        }
+
+        fadeCoroutine = StartCoroutine(FadeRoutine(0f, 0.25f, () =>
         {
             activeProfileIndex = -1;
             gameObject.SetActive(false);
+            fadeCoroutine = null;
         }));
     }
 
     /// <summary>
-    /// ใช้งาน Profile ตามลำดับ index โดยไม่มีการ Overwrite ค่าพิกัด
+    /// ฟังก์ชัน Cosine Ease-In-Out ให้ความโค้งมนของแสงนุ่มนวลไร้รอยหักมุม
     /// </summary>
+    public static float SmoothEase(float t)
+    {
+        t = Mathf.Clamp01(t);
+        return 0.5f * (1f - Mathf.Cos(t * Mathf.PI));
+    }
+
+    /// <summary>
+    /// แอนิเมชันกะพริบเตือน N ครั้ง แบบ Smooth Sinusoidal Curve แล้วค่อยๆ ละลายดับ
+    /// </summary>
+    private IEnumerator BlinkSequenceRoutine()
+    {
+        if (canvasGroup == null) yield break;
+
+        canvasGroup.alpha = 0f;
+        UpdateShaderProperties();
+
+        // 1. หน่วงเวลาก่อนเริ่มเล็กน้อย (รอกล้องซูมเข้ามินิเกมให้นิ่ง)
+        if (startDelay > 0f)
+        {
+            yield return new WaitForSecondsRealtime(startDelay);
+        }
+
+        for (int i = 0; i < blinkCount; i++)
+        {
+            // 2. ค่อยๆ สว่างขึ้นด้วย Cosine Ease-In-Out
+            float elapsed = 0f;
+            float startAlpha = canvasGroup.alpha;
+            while (elapsed < flashInDuration)
+            {
+                elapsed += Time.unscaledDeltaTime;
+                float t = flashInDuration > 0f ? (elapsed / flashInDuration) : 1f;
+                canvasGroup.alpha = Mathf.Lerp(startAlpha, 1f, SmoothEase(t));
+                yield return null;
+            }
+            canvasGroup.alpha = 1f;
+
+            // 3. ค้างสว่างเต็มที่ชั่วครู่ให้สายตาจับโฟกัสชัดเจน
+            if (flashHoldDuration > 0f)
+            {
+                yield return new WaitForSecondsRealtime(flashHoldDuration);
+            }
+
+            // 4. ค่อยๆ หรี่ลง (หรือค่อยๆ ละลายดับหายไปสำหรับรอบสุดท้าย)
+            bool isLast = (i == blinkCount - 1);
+            float targetAlpha = isLast ? 0f : minBlinkAlpha;
+            float duration = isLast ? finalFadeOutDuration : flashOutDuration;
+
+            elapsed = 0f;
+            while (elapsed < duration)
+            {
+                elapsed += Time.unscaledDeltaTime;
+                float t = duration > 0f ? (elapsed / duration) : 1f;
+                float eased = isLast ? Mathf.SmoothStep(0f, 1f, Mathf.Clamp01(t)) : SmoothEase(t);
+                canvasGroup.alpha = Mathf.Lerp(1f, targetAlpha, eased);
+                yield return null;
+            }
+            canvasGroup.alpha = targetAlpha;
+        }
+
+        // จบการทำงานและซ่อน GameObject อย่างนุ่มนวล
+        canvasGroup.alpha = 0f;
+        activeProfileIndex = -1;
+        gameObject.SetActive(false);
+        fadeCoroutine = null;
+    }
+
     public void ApplyProfile(int index)
     {
         activeProfileIndex = index;
@@ -163,9 +299,6 @@ public class MinigameSimpleBorder : MonoBehaviour
         UpdateShaderProperties();
     }
 
-    /// <summary>
-    /// บันทึกค่าพิกัดและขนาดของ RectTransform ปัจจุบันลงใน Active Profile (Two-Way Sync)
-    /// </summary>
     public void SaveCurrentRectToActiveProfile()
     {
         if (rootRect == null) rootRect = GetComponent<RectTransform>();
@@ -180,9 +313,6 @@ public class MinigameSimpleBorder : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// Snap ตำแหน่งและขนาดของ Profile จาก referenceTransform (เรียกต่อเมื่อผู้ใช้กดสั่งเท่านั้น)
-    /// </summary>
     public void SnapProfileFromReference(int index)
     {
         if (profiles == null || index < 0 || index >= profiles.Length) return;
@@ -218,9 +348,13 @@ public class MinigameSimpleBorder : MonoBehaviour
         targetMat.SetFloat(PropPadding, glowPadding);
         targetMat.SetFloat(PropGlowSpread, glowSpread);
         targetMat.SetFloat(PropGlowIntensity, glowIntensity);
-        targetMat.SetFloat(PropPulseSpeed, enablePulse ? pulseSpeed : 0f);
-        targetMat.SetFloat(PropPulseMinAlpha, minPulseAlpha);
-        targetMat.SetFloat(PropPulseMaxAlpha, maxPulseAlpha);
+
+        // ปิดการกะพริบใน Shader ขณะใช้โหมด Auto Fade-Out เพื่อไม่ให้คลื่นแสง 2 ตัวตีกันจนกระตุก
+        bool useShaderPulse = enablePulse && !autoFadeOut;
+        targetMat.SetFloat(PropPulseSpeed, useShaderPulse ? pulseSpeed : 0f);
+        targetMat.SetFloat(PropPulseMinAlpha, useShaderPulse ? minPulseAlpha : 1.0f);
+        targetMat.SetFloat(PropPulseMaxAlpha, useShaderPulse ? maxPulseAlpha : 1.0f);
+
         targetMat.SetFloat(PropAnimatedDash, animatedDashIntensity);
         targetMat.SetFloat(PropDashSpeed, dashSpeed);
     }
@@ -240,7 +374,7 @@ public class MinigameSimpleBorder : MonoBehaviour
         {
             elapsed += Time.unscaledDeltaTime;
             float t = duration > 0f ? Mathf.Clamp01(elapsed / duration) : 1f;
-            canvasGroup.alpha = Mathf.Lerp(start, targetAlpha, t);
+            canvasGroup.alpha = Mathf.Lerp(start, targetAlpha, Mathf.SmoothStep(0f, 1f, t));
             yield return null;
         }
 
