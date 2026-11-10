@@ -11,6 +11,74 @@ public class ScreenFader : MonoBehaviour
 
     [Header("Settings")] public float fadeDuration = 0.5f;
 
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
+    private static void BootstrapAfterFirstSceneLoad()
+    {
+        SceneManager.sceneLoaded -= OnAnySceneLoaded;
+        SceneManager.sceneLoaded += OnAnySceneLoaded;
+        EnsureSceneFaderReady();
+    }
+
+    private static void OnAnySceneLoaded(Scene scene, LoadSceneMode mode)
+    {
+        EnsureSceneFaderReady();
+    }
+
+    private static void EnsureSceneFaderReady()
+    {
+        if (Instance != null)
+        {
+            Instance.EnsureComponentsReady();
+            return;
+        }
+
+        ScreenFader[] faders = FindObjectsByType<ScreenFader>(FindObjectsInactive.Include);
+        if (faders == null || faders.Length == 0) return;
+
+        ScreenFader target = faders[0];
+        bool wasInactive = !target.gameObject.activeInHierarchy;
+        target.EnsureComponentsReady();
+
+        // ตื่นหลัง event sceneLoaded รอบแรก จึงสั่งเฟดสว่างเหมือนการโหลดซีนปกติ
+        if (wasInactive && Instance == target)
+        {
+            target.OnSceneLoaded(SceneManager.GetActiveScene(), LoadSceneMode.Single);
+        }
+    }
+
+    private void EnsureComponentsReady()
+    {
+        Transform t = transform;
+        while (t != null)
+        {
+            if (!t.gameObject.activeSelf) t.gameObject.SetActive(true);
+            t = t.parent;
+        }
+
+        enabled = true;
+        Canvas canvas = GetComponent<Canvas>();
+        if (canvas != null) canvas.enabled = true;
+
+        if (fadeImageGroup == null) fadeImageGroup = GetComponentInChildren<CanvasGroup>(true);
+        if (fadeImageGroup != null)
+        {
+            Transform gt = fadeImageGroup.transform;
+            while (gt != null)
+            {
+                if (!gt.gameObject.activeSelf) gt.gameObject.SetActive(true);
+                gt = gt.parent;
+            }
+
+            Graphic[] graphics = fadeImageGroup.GetComponentsInChildren<Graphic>(true);
+            for (int i = 0; i < graphics.Length; i++)
+            {
+                if (graphics[i] == null) continue;
+                if (!graphics[i].gameObject.activeSelf) graphics[i].gameObject.SetActive(true);
+                graphics[i].enabled = true;
+            }
+        }
+    }
+
     void Awake()
     {
         // ทำให้ระบบนี้อยู่ข้ามฉากได้ตลอดรอดฝั่ง
@@ -23,6 +91,8 @@ public class ScreenFader : MonoBehaviour
         }
         else
         {
+            if (fadeImageGroup != null) fadeImageGroup.alpha = 0f;
+            gameObject.SetActive(false);
             Destroy(gameObject);
         }
     }
@@ -33,12 +103,15 @@ public class ScreenFader : MonoBehaviour
         if (Instance == this)
         {
             SceneManager.sceneLoaded -= OnSceneLoaded;
+            Instance = null;
         }
     }
 
     // 🟢 ฟังก์ชันนี้จะทำงานอัตโนมัติ ทันทีที่ฉากใหม่โหลดเสร็จ 100%
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
+        EnsureComponentsReady();
+
         if (fadeImageGroup != null)
         {
             // บังคับปลดล็อคเมาส์ทันที! (แก้บั๊กคลิกไม่ได้)
@@ -52,6 +125,7 @@ public class ScreenFader : MonoBehaviour
     // 🟢 ใช้ฟังก์ชันนี้ฟังก์ชันเดียวเลย ตอนจะเปลี่ยนฉาก
     public void FadeToScene(int sceneIndex)
     {
+        EnsureComponentsReady();
         StartCoroutine(FadeAndLoadRoutine(sceneIndex));
     }
 
@@ -78,6 +152,7 @@ public class ScreenFader : MonoBehaviour
 
     public IEnumerator FadeRoutine(float targetAlpha)
     {
+        EnsureComponentsReady();
         if (fadeImageGroup == null) yield break;
 
         float startAlpha = fadeImageGroup.alpha;

@@ -42,6 +42,18 @@ public class MiniGameHold : MonoBehaviour
     public float movingChance = 0.7f;      
     public float moveSpeed = 0.3f;
 
+    [Header("Dynamic Zone Twists (Day 3+)")]
+    public bool enableDynamicZone = true;
+    public int dynamicZoneStartDay = 3;
+    [Range(0f, 1f)] public float zoneStutterChance = 0.45f;
+
+    [Header("Pressure Surge Twists (Day 5+)")]
+    public bool enablePressureSurge = true;
+    public int pressureSurgeStartDay = 5;
+    public float surgeWarningDuration = 0.7f;
+    public float surgeActiveDuration = 1.4f;
+    public float surgeForce = 0.65f;
+
     // --- State Variables ---
     private float currentGauge = 0f;
     private float currentError = 0f;
@@ -53,13 +65,23 @@ public class MiniGameHold : MonoBehaviour
 
     private bool isGameActive = false;
     private bool isZoneMoving = false;
-    private float randomTimeOffset = 0f;
+    private float zoneMovePhase = 0f;
+    private float currentMoveSpeed = 0.3f;
+    private float baseMoveSpeed = 0.3f;
+    private float nextZoneShiftTimer = 0f;
+    private bool isZonePaused = false;
+
+    private float activeSurgeForce = 0f;
+    private Coroutine twistCoroutine;
 
     private Vector3 originalButtonScale;
+    private Color originalInstructionColor = Color.white;
     private Image targetZoneImage; 
     
     private void Awake()
     {
+        baseMoveSpeed = moveSpeed;
+
         if (buttonVisual != null)
         {
             originalButtonScale = buttonVisual.localScale;
@@ -69,6 +91,11 @@ public class MiniGameHold : MonoBehaviour
         {
             targetZoneImage = targetZone.GetComponent<Image>();
         }
+
+        if (instructionText != null)
+        {
+            originalInstructionColor = instructionText.color;
+        }
     }
 
     private void OnEnable()
@@ -77,11 +104,19 @@ public class MiniGameHold : MonoBehaviour
         IdleMinigame(); 
     }
     
-    // 🟢 อัปเดตโหมด Idle ให้เคลียร์หลอดต่างๆ ให้เป็น 0 ด้วย จะได้ดูเหมือนปิดเครื่องอยู่
+    // อัปเดตโหมด Idle ให้เคลียร์หลอดต่างๆ ให้เป็น 0 ด้วย จะได้ดูเหมือนปิดเครื่องอยู่
     public void IdleMinigame()
     {
         isGameActive = false;
-        if (instructionText != null) instructionText.text = "";
+        activeSurgeForce = 0f;
+        twistCoroutine = null;
+        StopAllCoroutines();
+
+        if (instructionText != null)
+        {
+            instructionText.text = "";
+            instructionText.color = originalInstructionColor;
+        }
         if (timerText != null) timerText.text = "";
         
         if (errorBar != null) 
@@ -115,11 +150,20 @@ public class MiniGameHold : MonoBehaviour
             return; 
         }
 
+        if (twistCoroutine != null)
+        {
+            StopCoroutine(twistCoroutine);
+            twistCoroutine = null;
+        }
+
         int day = gameManager.currentDay;
         currentGauge = 0f;
         currentError = 0f;
         timer = surviveTime;
         isZoneMoving = false;
+        isZonePaused = false;
+        activeSurgeForce = 0f;
+        currentMoveSpeed = baseMoveSpeed;
 
         if (day >= 3 && day < 6)
         {
@@ -127,17 +171,20 @@ public class MiniGameHold : MonoBehaviour
             {
                 errorPenalty = 0.4f;
                 isZoneMoving = true;               
-                randomTimeOffset = Random.Range(0f, 100f);
+                zoneMovePhase = Random.Range(0f, 100f);
+                currentMoveSpeed = baseMoveSpeed;
             }
         }
 
         if (day >= 6)
         {
             errorPenalty = 0.3f;
-            moveSpeed = 0.5f;
+            currentMoveSpeed = Mathf.Max(baseMoveSpeed, 0.5f);
             isZoneMoving = true;               
-            randomTimeOffset = Random.Range(0f, 100f);           
+            zoneMovePhase = Random.Range(0f, 100f);           
         }
+
+        nextZoneShiftTimer = Random.Range(1.2f, 2.2f);
 
         if (!isZoneMoving)
         {
@@ -146,24 +193,105 @@ public class MiniGameHold : MonoBehaviour
             UpdateZoneUI();
         }
      
-        if (instructionText != null) instructionText.text = "Hold in gauge..";
+        if (instructionText != null)
+        {
+            instructionText.text = "Hold in gauge..";
+            instructionText.color = originalInstructionColor;
+        }
         if (errorBar != null) errorBar.fillAmount = 0f;
 
         isGameActive = true;
+
+        if (enablePressureSurge && day >= pressureSurgeStartDay)
+        {
+            twistCoroutine = StartCoroutine(PressureSurgeRoutine());
+        }
+    }
+
+    private IEnumerator PressureSurgeRoutine()
+    {
+        // หน่วงเวลาให้ผู้เล่นตั้งหลักในช่วงแรก
+        yield return new WaitForSeconds(Random.Range(2.2f, 3.2f));
+
+        while (isGameActive && timer > 2.2f)
+        {
+            bool pushUp = Random.value > 0.5f;
+
+            // ช่วงแจ้งเตือนล่วงหน้า (Pure ASCII Text, No Emoji)
+            if (instructionText != null)
+            {
+                instructionText.text = "WARNING: PRESSURE SURGE!";
+                instructionText.color = new Color(1f, 0.65f, 0f);
+            }
+            if (AudioManager.Instance != null) AudioManager.Instance.PlaySFX("clickSound");
+
+            yield return new WaitForSeconds(surgeWarningDuration);
+
+            if (!isGameActive) yield break;
+
+            // ช่วงแรงดันกระชากทำงาน
+            activeSurgeForce = pushUp ? surgeForce : -surgeForce;
+            if (instructionText != null)
+            {
+                instructionText.text = pushUp ? "PRESSURE SURGE UP!" : "PRESSURE DROP!";
+                instructionText.color = new Color(1f, 0.25f, 0.25f);
+            }
+            if (AudioManager.Instance != null) AudioManager.Instance.PlaySFX("missSound");
+
+            yield return new WaitForSeconds(surgeActiveDuration);
+
+            activeSurgeForce = 0f;
+            if (!isGameActive) yield break;
+
+            if (instructionText != null)
+            {
+                instructionText.text = "Hold in gauge..";
+                instructionText.color = originalInstructionColor;
+            }
+
+            yield return new WaitForSeconds(Random.Range(2.5f, 3.5f));
+        }
     }
 
     private void Update()
     {
         if (!isGameActive) return;
 
+        int day = gameManager != null ? gameManager.currentDay : 1;
+
         if (isZoneMoving)
         {
-            targetMin = Mathf.PingPong((Time.time + randomTimeOffset) * moveSpeed, 1f - zoneSize);
+            if (enableDynamicZone && day >= dynamicZoneStartDay)
+            {
+                nextZoneShiftTimer -= Time.deltaTime;
+                if (nextZoneShiftTimer <= 0f)
+                {
+                    if (!isZonePaused && Random.value <= zoneStutterChance)
+                    {
+                        isZonePaused = true;
+                        nextZoneShiftTimer = Random.Range(0.35f, 0.65f);
+                    }
+                    else
+                    {
+                        isZonePaused = false;
+                        float dayBase = day >= 6 ? Mathf.Max(baseMoveSpeed, 0.5f) : baseMoveSpeed;
+                        currentMoveSpeed = dayBase * Random.Range(0.75f, 1.45f);
+                        nextZoneShiftTimer = Random.Range(1.0f, 2.0f);
+                    }
+                }
+            }
+
+            if (!isZonePaused)
+            {
+                zoneMovePhase += Time.deltaTime * currentMoveSpeed;
+            }
+
+            targetMin = Mathf.PingPong(zoneMovePhase, 1f - zoneSize);
             UpdateZoneUI();
         }
 
         timer -= Time.deltaTime;
-        if (timerText != null) timerText.text = Mathf.Ceil(timer).ToString() + "s";
+        if (timerText != null) timerText.text = Mathf.Ceil(timer).ToString() + "";
 
         if (Input.GetKey(KeyCode.Space) || Input.GetMouseButton(0))
         {
@@ -176,6 +304,11 @@ public class MiniGameHold : MonoBehaviour
             currentGauge -= gaugeDownSpeed * Time.deltaTime;
             if (buttonVisual != null)
                 buttonVisual.localScale = Vector3.Lerp(buttonVisual.localScale, originalButtonScale, Time.deltaTime * buttonLerpSpeed);
+        }
+
+        if (activeSurgeForce != 0f)
+        {
+            currentGauge += activeSurgeForce * Time.deltaTime;
         }
 
         currentGauge = Mathf.Clamp01(currentGauge);
@@ -215,7 +348,7 @@ public class MiniGameHold : MonoBehaviour
             }
             else
             {
-                errorBar.color = Color.red; 
+                errorBar.color = Color.red;
             }
         }
     
@@ -244,8 +377,18 @@ public class MiniGameHold : MonoBehaviour
     private void WinGame()
     {
         isGameActive = false;
-        if (timerText != null) timerText.text = "0s";
-        if (instructionText != null) instructionText.text = "success";
+        activeSurgeForce = 0f;
+        if (twistCoroutine != null)
+        {
+            StopCoroutine(twistCoroutine);
+            twistCoroutine = null;
+        }
+        if (timerText != null) timerText.text = "0";
+        if (instructionText != null)
+        {
+            instructionText.text = "Success";
+            instructionText.color = originalInstructionColor;
+        }
 
         if (buttonVisual != null) buttonVisual.localScale = originalButtonScale;
         StartCoroutine(EndMinigameRoutine(true));
@@ -254,7 +397,17 @@ public class MiniGameHold : MonoBehaviour
     private void LoseGame()
     {
         isGameActive = false;
-        if (instructionText != null) instructionText.text = "You failed";
+        activeSurgeForce = 0f;
+        if (twistCoroutine != null)
+        {
+            StopCoroutine(twistCoroutine);
+            twistCoroutine = null;
+        }
+        if (instructionText != null)
+        {
+            instructionText.text = "You failed";
+            instructionText.color = originalInstructionColor;
+        }
 
         if (buttonVisual != null) buttonVisual.localScale = originalButtonScale;
         StartCoroutine(EndMinigameRoutine(false));

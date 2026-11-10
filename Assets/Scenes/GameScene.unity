@@ -1082,7 +1082,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 832185199461053250, guid: d9ca586a845df8e43a5965c717f200bf, type: 3}
       propertyPath: m_IsActive
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 5057241264913053958, guid: d9ca586a845df8e43a5965c717f200bf, type: 3}
       propertyPath: m_Camera
@@ -1183,7 +1183,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &133897834
 RectTransform:
   m_ObjectHideFlags: 0
@@ -2117,7 +2117,15 @@ MonoBehaviour:
   minPresses: 1
   maxPresses: 9
   delayBetweenRounds: 2
-  sameAsLastChance: 0.3
+  enableVanishingPrompt: 1
+  vanishPromptStartDay: 3
+  promptVisibleDuration: 0.9
+  promptFadeDuration: 0.45
+  enableBlindMode: 1
+  blindModeStartDay: 5
+  blindModeChance: 0.7
+  blindButtonBlinkCount: 2
+  blindButtonBlinkInterval: 0.08
   autoSubmitDelay: 0.5
   dialogManager: {fileID: 0}
 --- !u!114 &332375703
@@ -3168,6 +3176,14 @@ MonoBehaviour:
   tolerance: 0.2
   minShrinkSpeed: 1.5
   maxShrinkSpeed: 3.5
+  enableSpeedShift: 1
+  speedShiftStartDay: 3
+  speedShiftChance: 0.5
+  shiftFastColor: {r: 1, g: 0.55, b: 0.1, a: 1}
+  shiftSlowColor: {r: 0.2, g: 0.9, b: 1, a: 1}
+  enablePerfectHit: 1
+  perfectTolerance: 0.065
+  perfectColor: {r: 1, g: 0.88, b: 0.1, a: 1}
   endMinigameDelay: 0.8
   normalColor: {r: 1, g: 1, b: 1, a: 1}
   hitColor: {r: 0, g: 1, b: 0, a: 1}
@@ -3389,8 +3405,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -79.38, y: 269.72}
-  m_SizeDelta: {x: 874.2, y: 333.64}
+  m_AnchoredPosition: {x: -21.58, y: 269.72}
+  m_SizeDelta: {x: 967.54, y: 333.64}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &579946702
 MonoBehaviour:
@@ -4183,6 +4199,13 @@ MonoBehaviour:
   timeLimit: 0
   fillPerPress: 0.08
   drainRate: 0
+  enableOverheat: 1
+  overheatStartDay: 4
+  overheatWarningDuration: 0.6
+  overheatDuration: 0.95
+  overheatPenalty: 0.12
+  warningBarColor: {r: 1, g: 0.85, b: 0.1, a: 1}
+  overheatBarColor: {r: 1, g: 1, b: 1, a: 1}
 --- !u!114 &656496421
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -11516,6 +11539,14 @@ MonoBehaviour:
   errorRecover: 0.2
   movingChance: 0.7
   moveSpeed: 0.3
+  enableDynamicZone: 1
+  dynamicZoneStartDay: 3
+  zoneStutterChance: 0.45
+  enablePressureSurge: 1
+  pressureSurgeStartDay: 5
+  surgeWarningDuration: 0.7
+  surgeActiveDuration: 1.4
+  surgeForce: 0.65
 --- !u!114 &1243543567
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -14754,15 +14785,15 @@ MonoBehaviour:
       m_Calls: []
   m_text: Timer Text
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 66142427382eba04db86cd2773b51a2a, type: 2}
-  m_sharedMaterial: {fileID: 755407907106460782, guid: 66142427382eba04db86cd2773b51a2a, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: f5ae5fb0733aee944a0958e838908f9d, type: 2}
+  m_sharedMaterial: {fileID: -6268277238096816043, guid: f5ae5fb0733aee944a0958e838908f9d, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4294967295
-  m_fontColor: {r: 1, g: 1, b: 1, a: 1}
+    rgba: 4278190335
+  m_fontColor: {r: 1, g: 0, b: 0, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
   m_fontColorGradient:

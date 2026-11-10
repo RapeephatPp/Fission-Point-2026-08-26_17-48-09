@@ -16,8 +16,8 @@ public class MinigameRadar : MonoBehaviour
     public RectTransform shrinkingRing;  
     public Image shrinkingRingImage;     
 
-    // 🟢 ระบบซ่อน/แสดงเรดาร์
-    [Header("Visibility / Hide Settings (New!)")]
+    // ระบบซ่อน/แสดงเรดาร์
+    [Header("Visibility / Hide Settings")]
     [Tooltip("ลาก GameObject ลูกที่เป็นคอนเทนต์รวม/หน้าจอเรดาร์มาใส่ตรงนี้ เพื่อซ่อนทั้งจอตอนไม่ได้เล่น (ถ้าไม่มี ปล่อยว่างได้)")]
     public GameObject radarContent;
     [Tooltip("หรือจะใช้ CanvasGroup คุมการแสดงผลทั้งจอ (ถ้ามี CanvasGroup ใน Object นี้จะดึงให้อัตโนมัติ)")]
@@ -40,6 +40,19 @@ public class MinigameRadar : MonoBehaviour
     public float minShrinkSpeed = 1.4f;  
     public float maxShrinkSpeed = 3.2f;  
 
+    [Header("Speed Shift Twists (Day 3+)")]
+    public bool enableSpeedShift = true;
+    public int speedShiftStartDay = 3;
+    [Range(0f, 1f)] public float speedShiftChance = 0.5f;
+    public Color shiftFastColor = new Color(1f, 0.55f, 0.1f, 1f);
+    public Color shiftSlowColor = new Color(0.2f, 0.9f, 1f, 1f);
+
+    [Header("Perfect Hit Bonus")]
+    public bool enablePerfectHit = true;
+    [Tooltip("ระยะคลาดเคลื่อนที่ถือว่าแม่นยำสมบูรณ์แบบ (ได้ +2 Hits)")]
+    public float perfectTolerance = 0.065f;
+    public Color perfectColor = new Color(1f, 0.88f, 0.1f, 1f);
+
     [Header("Delay Settings")]
     public float endMinigameDelay = 0.8f;
 
@@ -53,6 +66,12 @@ public class MinigameRadar : MonoBehaviour
     private float currentRingScale = 0f;
     private float currentShrinkSpeed = 0f;
 
+    private bool hasSpeedShift = false;
+    private bool hasTriggeredShift = false;
+    private float shiftTriggerScale = 1.7f;
+    private float shiftTargetMultiplier = 1f;
+
+    private Color originalInstructionColor = Color.white;
     private bool isGameActive = false;
     private bool isWaitingForNext = false;
 
@@ -63,6 +82,11 @@ public class MinigameRadar : MonoBehaviour
         if (radarCanvasGroup == null)
         {
             radarCanvasGroup = GetComponent<CanvasGroup>();
+        }
+
+        if (instructionText != null)
+        {
+            originalInstructionColor = instructionText.color;
         }
     }
 
@@ -83,10 +107,11 @@ public class MinigameRadar : MonoBehaviour
         IdleMinigame(); 
     }
 
-    // 🟢 ซ่อนทุกชิ้นส่วนเมื่อไม่ได้ใช้งานมินิเกม
+    // ซ่อนทุกชิ้นส่วนเมื่อไม่ได้ใช้งานมินิเกม
     public void IdleMinigame()
     {
-        isGameActive = false; 
+        isGameActive = false;
+        isWaitingForNext = false;
         StopAllCoroutines();
 
         // 1. ซ่อนผ่าน Container หรือ CanvasGroup (ถ้ามี)
@@ -120,12 +145,16 @@ public class MinigameRadar : MonoBehaviour
         }
 
         // 3. ล้างข้อความทั้งหมดให้จอว่างเปล่า
-        if (instructionText != null) instructionText.text = "";
+        if (instructionText != null)
+        {
+            instructionText.text = "";
+            instructionText.color = originalInstructionColor;
+        }
         if (timerText != null) timerText.text = "";
         if (hitCountText != null) hitCountText.text = "";
     }
 
-    // 🟢 เปิดและเริ่มแสดงองค์ประกอบเมื่อเข้ามินิเกม
+    // เปิดและเริ่มแสดงองค์ประกอบเมื่อเข้ามินิเกม
     public void StartMinigame()
     {
         if (gameManager == null)
@@ -192,7 +221,11 @@ public class MinigameRadar : MonoBehaviour
         isWaitingForNext = false;
 
         UpdateHitText();
-        if (instructionText != null) instructionText.text = "Press at the right time..";
+        if (instructionText != null)
+        {
+            instructionText.text = "Press at the right time..";
+            instructionText.color = originalInstructionColor;
+        }
 
         isGameActive = true;
         SpawnNewRing();
@@ -203,12 +236,23 @@ public class MinigameRadar : MonoBehaviour
         currentRingScale = startScale;
         currentShrinkSpeed = Random.Range(minShrinkSpeed, maxShrinkSpeed);
 
+        int day = gameManager != null ? gameManager.currentDay : 1;
+        hasSpeedShift = enableSpeedShift && day >= speedShiftStartDay && Random.value <= speedShiftChance;
+        hasTriggeredShift = false;
+        shiftTriggerScale = Random.Range(1.55f, 2.0f);
+        shiftTargetMultiplier = Random.value > 0.5f ? Random.Range(1.35f, 1.65f) : Random.Range(0.55f, 0.72f);
+
         if (targetRing != null && shrinkingRing != null)
         {
             shrinkingRing.anchoredPosition = targetRing.anchoredPosition;
         }
 
         if (shrinkingRingImage != null) shrinkingRingImage.color = normalColor;
+        if (instructionText != null && isGameActive)
+        {
+            instructionText.text = "Press at the right time..";
+            instructionText.color = originalInstructionColor;
+        }
         UpdateRingScale();
 
         isWaitingForNext = false;
@@ -229,12 +273,24 @@ public class MinigameRadar : MonoBehaviour
 
         if (!isWaitingForNext)
         {
+            if (hasSpeedShift && !hasTriggeredShift && currentRingScale <= shiftTriggerScale)
+            {
+                hasTriggeredShift = true;
+                currentShrinkSpeed *= shiftTargetMultiplier;
+                if (shrinkingRingImage != null)
+                {
+                    shrinkingRingImage.color = shiftTargetMultiplier > 1f ? shiftFastColor : shiftSlowColor;
+                }
+                if (AudioManager.Instance != null) AudioManager.Instance.PlaySFX("clickSound");
+            }
+
             currentRingScale -= currentShrinkSpeed * Time.deltaTime;
             UpdateRingScale();
 
             if (currentRingScale < targetScale - tolerance)
             {
-                StartCoroutine(ShowFeedbackAndReset(false));
+                if (AudioManager.Instance != null) AudioManager.Instance.PlaySFX("missSound");
+                StartCoroutine(ShowFeedbackAndReset(false, false));
             }
             else if (Input.GetKeyDown(KeyCode.Space) || Input.GetMouseButtonDown(0))
             {
@@ -249,8 +305,12 @@ public class MinigameRadar : MonoBehaviour
 
         if (difference <= tolerance)
         {
-            currentHits++;
+            bool isPerfect = enablePerfectHit && difference <= perfectTolerance;
+            int points = isPerfect ? 2 : 1;
+            currentHits = Mathf.Min(currentHits + points, requiredHits);
             UpdateHitText();
+
+            if (AudioManager.Instance != null) AudioManager.Instance.PlaySFX("hitSound");
 
             if (currentHits >= requiredHits)
             {
@@ -258,12 +318,13 @@ public class MinigameRadar : MonoBehaviour
             }
             else
             {
-                StartCoroutine(ShowFeedbackAndReset(true));
+                StartCoroutine(ShowFeedbackAndReset(true, isPerfect));
             }
         }
         else
-        {            
-            StartCoroutine(ShowFeedbackAndReset(false));
+        {
+            if (AudioManager.Instance != null) AudioManager.Instance.PlaySFX("missSound");
+            StartCoroutine(ShowFeedbackAndReset(false, false));
         }
     }
 
@@ -288,13 +349,19 @@ public class MinigameRadar : MonoBehaviour
         }
     }
 
-    private IEnumerator ShowFeedbackAndReset(bool isHit)
+    private IEnumerator ShowFeedbackAndReset(bool isHit, bool isPerfect)
     {
         isWaitingForNext = true; 
 
         if (shrinkingRingImage != null)
         {
-            shrinkingRingImage.color = isHit ? hitColor : missColor;
+            shrinkingRingImage.color = isPerfect ? perfectColor : (isHit ? hitColor : missColor);
+        }
+
+        if (isPerfect && instructionText != null)
+        {
+            instructionText.text = "PERFECT! (+2)";
+            instructionText.color = perfectColor;
         }
         
         yield return new WaitForSeconds(0.25f);
@@ -308,7 +375,11 @@ public class MinigameRadar : MonoBehaviour
     private void WinGame()
     {
         isGameActive = false;
-        if (instructionText != null) instructionText.text = "Success";
+        if (instructionText != null)
+        {
+            instructionText.text = "Success";
+            instructionText.color = originalInstructionColor;
+        }
         if (shrinkingRingImage != null) shrinkingRingImage.color = hitColor;
 
         currentRingScale = targetScale;
@@ -321,7 +392,11 @@ public class MinigameRadar : MonoBehaviour
     {
         isGameActive = false;
         if (timerText != null) timerText.text = "0s";
-        if (instructionText != null) instructionText.text = reason;
+        if (instructionText != null)
+        {
+            instructionText.text = reason;
+            instructionText.color = originalInstructionColor;
+        }
 
         StartCoroutine(EndMinigameRoutine(false));
     }
@@ -330,7 +405,7 @@ public class MinigameRadar : MonoBehaviour
     {
         yield return new WaitForSeconds(endMinigameDelay);
 
-        // 🟢 ซ่อนหน้าจอทันทีเมื่อมินิเกมจบลง
+        // ซ่อนหน้าจอทันทีเมื่อมินิเกมจบลง
         IdleMinigame();
 
         if (gameManager != null)

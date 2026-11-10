@@ -229,6 +229,8 @@ public class ControlRoomManager : MonoBehaviour
     private Coroutine movingZonesCoroutine;
     private Coroutine restartTextShakeCoroutine;
     private Coroutine lightFlickerCoroutine;
+    private Coroutine switchToMinigameCoroutine;
+    private Coroutine switchBackToMainCoroutine;
 
     private void Awake()
     {
@@ -303,9 +305,7 @@ public class ControlRoomManager : MonoBehaviour
         if (winPanel != null) winPanel.SetActive(false);
         if (winCheckTransform != null) winCheckTransform.gameObject.SetActive(false);
 
-        if (damageFlashImage != null) { Color c = damageFlashImage.color; c.a = 0f; damageFlashImage.color = c; }
-        if (eventBorderImage != null) { Color c = eventBorderImage.color; c.a = 0f; eventBorderImage.color = c; }
-        if (lightFlickerOverlay != null) { Color c = lightFlickerOverlay.color; c.a = 0f; lightFlickerOverlay.color = c; }
+        PrepareOverlayVisuals();
         
         if (notificationText != null) { Color c = notificationText.color; c.a = 0f; notificationText.color = c; notificationText.gameObject.SetActive(false); }
         if (tipTextTitle != null) { Color c = tipTextTitle.color; c.a = 0f; tipTextTitle.color = c; tipTextTitle.gameObject.SetActive(false); }
@@ -409,6 +409,7 @@ public class ControlRoomManager : MonoBehaviour
     {
         if (lightFlickerOverlay != null)
         {
+            if (darkness > 0f) EnsureOverlayReady(lightFlickerOverlay, !lightFlickerOverlay.gameObject.activeInHierarchy || !lightFlickerOverlay.enabled);
             Color c = lightFlickerOverlay.color;
             c.a = darkness;
             lightFlickerOverlay.color = c;
@@ -785,20 +786,13 @@ public class ControlRoomManager : MonoBehaviour
 
     private void AdvanceToNextDay()
     {
+        if (!isGameActive) return;
         if (currentDay >= maxDays) { WinGame(); return; }
         StartCoroutine(DayTransitionRoutine());
     }
 
-    private IEnumerator DayTransitionRoutine()
+    private void ResetTransientRoomState()
     {
-        isGameActive = false;
-        
-        if (ScreenFader.Instance != null) 
-        {
-            ScreenFader.Instance.fadeDuration = 1.5f; 
-            yield return StartCoroutine(ScreenFader.Instance.FadeRoutine(1f));
-        }
-
         isMashingBlackout = false;
         StopGlitchImmediately();
 
@@ -809,20 +803,44 @@ public class ControlRoomManager : MonoBehaviour
         isZonesMoving = false;
         if (radiationPulseCoroutine != null) { StopCoroutine(radiationPulseCoroutine); radiationPulseCoroutine = null; }
 
+        if (yellowSpawnCoroutine != null) { StopCoroutine(yellowSpawnCoroutine); yellowSpawnCoroutine = null; }
+        isYellowSpawning = false;
+        if (blackoutSpawnCoroutine != null) { StopCoroutine(blackoutSpawnCoroutine); blackoutSpawnCoroutine = null; }
+        isBlackoutSpawning = false;
         if (yellowZoneImage != null) yellowZoneImage.color = originalYellowColor;
         if (yellowZone != null) yellowZone.sizeDelta = new Vector2(0, yellowZone.sizeDelta.y);
         if (blackoutZone != null) blackoutZone.sizeDelta = new Vector2(0, blackoutZone.sizeDelta.y);
+        if (eventBorderCoroutine != null) { StopCoroutine(eventBorderCoroutine); eventBorderCoroutine = null; }
         if (eventBorderImage != null) { Color cb = eventBorderImage.color; cb.a = 0f; eventBorderImage.color = cb; }
-        
+
         if (chromaticAberration != null) chromaticAberration.intensity.value = GetBaselineCA();
         if (vignette != null) vignette.intensity.value = GetBaselineVignette();
         if (lensDistortion != null) lensDistortion.intensity.value = defaultLensDistortion;
+
+        if (mainGameElements != null)
+        {
+            mainGameElements.anchoredPosition = originalMainGamePos;
+        }
 
         if (controlRoomContainer != null)
         {
             controlRoomContainer.anchoredPosition = originalContainerPos;
             controlRoomContainer.localScale = originalContainerScale;
         }
+    }
+
+    private IEnumerator DayTransitionRoutine()
+    {
+        isGameActive = false;
+        StopMinigameImmediately();
+        
+        if (ScreenFader.Instance != null) 
+        {
+            ScreenFader.Instance.fadeDuration = 1.5f; 
+            yield return StartCoroutine(ScreenFader.Instance.FadeRoutine(1f));
+        }
+
+        ResetTransientRoomState();
 
         currentDay++;
         timeRemaining = GetTimeForDay(currentDay);
@@ -882,7 +900,7 @@ public class ControlRoomManager : MonoBehaviour
 
         if (dialogManager != null && dialogManager.IsDialogActive)
         {
-            currentRedShrink *= 0.2f; // ชะลอการหดตัวของ Red Zone ลง 80% ระหว่างมีบทสนทนา
+            currentRedShrink *= 0.8f; // ชะลอการหดตัวของ Red Zone ลง 80% ระหว่างมีบทสนทนา
         }
 
         if (!isGreenSpawning && greenZone.rect.width > minGreenWidth)
@@ -1196,8 +1214,36 @@ public class ControlRoomManager : MonoBehaviour
         if (minigamePanels != null && minigamePanels.Length > 0)
         {
             currentActiveMinigame = minigamePanels[Random.Range(0, minigamePanels.Length)];
-            StartCoroutine(SwitchToMinigameAnimation());
+            if (switchToMinigameCoroutine != null) StopCoroutine(switchToMinigameCoroutine);
+            switchToMinigameCoroutine = StartCoroutine(SwitchToMinigameAnimation());
         }
+    }
+
+    private void StopMinigameImmediately()
+    {
+        if (switchToMinigameCoroutine != null)
+        {
+            StopCoroutine(switchToMinigameCoroutine);
+            switchToMinigameCoroutine = null;
+        }
+        if (switchBackToMainCoroutine != null)
+        {
+            StopCoroutine(switchBackToMainCoroutine);
+            switchBackToMainCoroutine = null;
+        }
+
+        if (minigameBorder != null)
+        {
+            minigameBorder.HideBorder();
+        }
+
+        if (currentActiveMinigame != null)
+        {
+            currentActiveMinigame.BroadcastMessage("IdleMinigame", SendMessageOptions.DontRequireReceiver);
+            currentActiveMinigame = null;
+        }
+
+        isMinigameActive = false;
     }
 
     private IEnumerator SwitchToMinigameAnimation()
@@ -1256,14 +1302,18 @@ public class ControlRoomManager : MonoBehaviour
         {
             currentActiveMinigame.BroadcastMessage("StartMinigame", SendMessageOptions.DontRequireReceiver);
         }
+        switchToMinigameCoroutine = null;
     }
 
     public void FinishMinigame(bool isSuccess)
     {
+        if (!isGameActive || !isMinigameActive) return;
+
         if (isSuccess) totalMinigamesWon++;
         else totalMinigamesFailed++;
 
-        StartCoroutine(SwitchBackToMainAnimation(isSuccess));
+        if (switchBackToMainCoroutine != null) StopCoroutine(switchBackToMainCoroutine);
+        switchBackToMainCoroutine = StartCoroutine(SwitchBackToMainAnimation(isSuccess));
     }
 
     private IEnumerator SwitchBackToMainAnimation(bool isSuccess)
@@ -1326,7 +1376,8 @@ public class ControlRoomManager : MonoBehaviour
         
         UpdateSanityUI();
         CheckGameOver();
-        isMinigameActive = false; 
+        isMinigameActive = false;
+        switchBackToMainCoroutine = null;
     }
 
     private void CheckGameOver()
@@ -1407,7 +1458,8 @@ public class ControlRoomManager : MonoBehaviour
         if (!isGameActive) return;
         isGameActive = false;
         isEndGameScreenActive = true;
-        timerText.text = "Time: 00";
+        StopMinigameImmediately();
+        if (timerText != null) timerText.text = "Time: 00";
 
         StartCoroutine(WinSequence());
     }
@@ -1416,6 +1468,12 @@ public class ControlRoomManager : MonoBehaviour
     {
         yield return new WaitForSeconds(0.4f);
 
+        ResetTransientRoomState();
+        if (ScreenFader.Instance != null && ScreenFader.Instance.fadeImageGroup != null && ScreenFader.Instance.fadeImageGroup.alpha > 0f)
+        {
+            ScreenFader.Instance.fadeDuration = 0.35f;
+            StartCoroutine(ScreenFader.Instance.FadeRoutine(0f));
+        }
         if (mainGameElements != null) mainGameElements.gameObject.SetActive(false);
         if (winPanel != null) winPanel.SetActive(true);
         if (winCheckTransform != null) winCheckTransform.gameObject.SetActive(false);
@@ -1585,15 +1643,91 @@ public class ControlRoomManager : MonoBehaviour
         return xPos >= (zone.anchoredPosition.x - halfWidth) && xPos <= (zone.anchoredPosition.x + halfWidth);
     }
 
+    private static void EnsureHierarchyActive(Transform t)
+    {
+        while (t != null)
+        {
+            if (!t.gameObject.activeSelf) t.gameObject.SetActive(true);
+            t = t.parent;
+        }
+    }
+
+    private static void EnsureOverlayReady(Graphic g, bool clearAlpha)
+    {
+        if (g == null) return;
+        if (clearAlpha)
+        {
+            Color c = g.color;
+            c.a = 0f;
+            g.color = c;
+        }
+        g.enabled = true;
+        EnsureHierarchyActive(g.transform);
+    }
+
+    private void PrepareOverlayVisuals()
+    {
+        // ล้าง alpha = 0 ก่อนเปิดตัวแม่ RedStuffContainer เพื่อกันแวบแดงและกัน WarningAudioController ลั่นตอนเริ่มเกม
+        Graphic[] overlays = { damageFlashImage, eventBorderImage, lightFlickerOverlay };
+        for (int i = 0; i < overlays.Length; i++)
+        {
+            if (overlays[i] == null) continue;
+            Color c = overlays[i].color;
+            c.a = 0f;
+            overlays[i].color = c;
+            overlays[i].enabled = true;
+        }
+
+        if (eventBorderImage != null)
+        {
+            WarningAudioController warningAudio = eventBorderImage.GetComponent<WarningAudioController>();
+            if (warningAudio != null) warningAudio.enabled = true;
+            AudioSource warningSource = eventBorderImage.GetComponent<AudioSource>();
+            if (warningSource != null) warningSource.enabled = true;
+        }
+
+        for (int i = 0; i < overlays.Length; i++)
+        {
+            if (overlays[i] != null) EnsureHierarchyActive(overlays[i].transform);
+        }
+
+        if (minigamePanels != null)
+        {
+            for (int i = 0; i < minigamePanels.Length; i++)
+            {
+                if (minigamePanels[i] == null) continue;
+                WarningImageBlinker[] blinkers = minigamePanels[i].GetComponentsInChildren<WarningImageBlinker>(true);
+                for (int j = 0; j < blinkers.Length; j++)
+                {
+                    WarningImageBlinker blinker = blinkers[j];
+                    if (blinker == null) continue;
+                    EnsureHierarchyActive(blinker.transform);
+                    blinker.enabled = true;
+                    blinker.StopBlink();
+                }
+            }
+        }
+    }
+
     private void ShowEventWarning(string message, string tip = "")
     {
         ShowNotification(message, tip);
-        if (eventBorderImage != null) StartCoroutine(PulseEventBorder());
+        if (eventBorderImage != null)
+        {
+            if (eventBorderCoroutine != null) StopCoroutine(eventBorderCoroutine);
+            eventBorderCoroutine = StartCoroutine(PulseEventBorder());
+        }
     }
 
     private IEnumerator PulseEventBorder()
     {
         if (eventBorderImage == null) yield break;
+        EnsureOverlayReady(eventBorderImage, !eventBorderImage.gameObject.activeInHierarchy || !eventBorderImage.enabled);
+        WarningAudioController warningAudio = eventBorderImage.GetComponent<WarningAudioController>();
+        if (warningAudio != null) warningAudio.enabled = true;
+        AudioSource warningSource = eventBorderImage.GetComponent<AudioSource>();
+        if (warningSource != null) warningSource.enabled = true;
+
         Color c = eventBorderImage.color;
         float elapsed = 0f;
         while(elapsed < 2.5f) 
@@ -1605,6 +1739,7 @@ public class ControlRoomManager : MonoBehaviour
         }
         c.a = 0f;
         eventBorderImage.color = c;
+        eventBorderCoroutine = null;
     }
 
     public void ShowNotification(string message, string tip = "")
@@ -1647,7 +1782,9 @@ public class ControlRoomManager : MonoBehaviour
         {
             notificationText.text = message;
             notificationText.maxVisibleCharacters = 0;
-            notificationText.gameObject.SetActive(!string.IsNullOrEmpty(message));
+            bool show = !string.IsNullOrEmpty(message);
+            if (show) EnsureOverlayReady(notificationText, false);
+            else notificationText.gameObject.SetActive(false);
             Color c = notificationText.color; c.a = 1f; notificationText.color = c;
         }
 
@@ -1655,7 +1792,9 @@ public class ControlRoomManager : MonoBehaviour
         {
             tipTextTitle.text = title;
             tipTextTitle.maxVisibleCharacters = 0;
-            tipTextTitle.gameObject.SetActive(!string.IsNullOrEmpty(title));
+            bool show = !string.IsNullOrEmpty(title);
+            if (show) EnsureOverlayReady(tipTextTitle, false);
+            else tipTextTitle.gameObject.SetActive(false);
             Color c = tipTextTitle.color; c.a = 1f; tipTextTitle.color = c;
         }
 
@@ -1663,7 +1802,9 @@ public class ControlRoomManager : MonoBehaviour
         {
             tipTextBody.text = body;
             tipTextBody.maxVisibleCharacters = 0;
-            tipTextBody.gameObject.SetActive(!string.IsNullOrEmpty(body));
+            bool show = !string.IsNullOrEmpty(body);
+            if (show) EnsureOverlayReady(tipTextBody, false);
+            else tipTextBody.gameObject.SetActive(false);
             Color c = tipTextBody.color; c.a = 1f; tipTextBody.color = c;
         }
 
@@ -1672,7 +1813,9 @@ public class ControlRoomManager : MonoBehaviour
             string combined = string.IsNullOrEmpty(title) ? body : $"{title}: {body}";
             tipText.text = combined;
             tipText.maxVisibleCharacters = 0;
-            tipText.gameObject.SetActive(!string.IsNullOrEmpty(combined));
+            bool show = !string.IsNullOrEmpty(combined);
+            if (show) EnsureOverlayReady(tipText, false);
+            else tipText.gameObject.SetActive(false);
             Color c = tipText.color; c.a = 1f; tipText.color = c;
         }
 
@@ -1884,6 +2027,7 @@ public class ControlRoomManager : MonoBehaviour
             Color c = damageFlashImage.color;
             c.a = 0.35f; 
             damageFlashImage.color = c;
+            EnsureOverlayReady(damageFlashImage, false);
         }
 
         float flashDuration = 0.2f;

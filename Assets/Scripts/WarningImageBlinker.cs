@@ -62,11 +62,15 @@ public class WarningImageBlinker : MonoBehaviour
 
     public void StartBlink()
     {
+        if (targetImage == null) targetImage = GetComponent<Image>();
         if (targetImage == null) return;
         if (blinkCoroutine != null) StopCoroutine(blinkCoroutine);
 
-        isBlinking = true;
+        if (!targetImage.gameObject.activeSelf) targetImage.gameObject.SetActive(true);
         targetImage.enabled = true;
+        if (!gameObject.activeInHierarchy) return;
+
+        isBlinking = true;
         blinkCoroutine = StartCoroutine(BlinkRoutine());
     }
 
