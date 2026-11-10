@@ -247,6 +247,7 @@ public class MiniGameMash : MonoBehaviour
             else
             {
                 currentProgress += fillPerPress;
+                if (AudioManager.Instance != null) AudioManager.Instance.PlaySFX("tileClick");
             }
 
             if (buttonVisual != null)

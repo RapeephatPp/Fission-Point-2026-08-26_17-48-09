@@ -288,7 +288,7 @@ public class MiniGame_PresseInstructed : MonoBehaviour
 
         if (Input.GetKeyDown(KeyCode.Space) || Input.GetMouseButtonDown(0))
         {
-            if (AudioManager.Instance != null) AudioManager.Instance.PlaySFX("clickSound");
+            if (AudioManager.Instance != null) AudioManager.Instance.PlaySFX("tileClick");
 
             if (currentPresses < gridButtons.Length)
             {

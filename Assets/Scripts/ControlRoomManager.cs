@@ -243,7 +243,7 @@ public class ControlRoomManager : MonoBehaviour
 
         if (minigameBorder == null)
         {
-            minigameBorder = FindAnyObjectByType<MinigameSimpleBorder>();
+            minigameBorder = FindAnyObjectByType<MinigameSimpleBorder>(FindObjectsInactive.Include);
         }
     }
 

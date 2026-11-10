@@ -85,6 +85,7 @@ public class MinigameSimpleBorder : MonoBehaviour
     private Image borderImage;
     private Coroutine fadeCoroutine;
     private Color currentColor;
+    private bool isShowing = false;
 
     // Shader Property IDs
     private static readonly int PropRectSize = Shader.PropertyToID("_RectSize");
@@ -103,7 +104,7 @@ public class MinigameSimpleBorder : MonoBehaviour
     private void Awake()
     {
         EnsureBorderUI();
-        if (Application.isPlaying)
+        if (Application.isPlaying && !isShowing)
         {
             if (canvasGroup != null) canvasGroup.alpha = 0f;
             gameObject.SetActive(false);
@@ -116,9 +117,48 @@ public class MinigameSimpleBorder : MonoBehaviour
         UpdateShaderProperties();
     }
 
+    private void OnDisable()
+    {
+        isShowing = false;
+        fadeCoroutine = null;
+    }
+
+    private void OnRectTransformDimensionsChange()
+    {
+        if (rootRect != null && borderImage != null && gameObject.activeInHierarchy)
+        {
+            Material targetMat = borderImage.material != null ? borderImage.material : borderMaterial;
+            if (targetMat != null)
+            {
+                targetMat.SetVector(PropRectSize, new Vector4(rootRect.rect.width, rootRect.rect.height, 0, 0));
+            }
+        }
+    }
+
     private void OnValidate()
     {
         UpdateShaderProperties();
+    }
+
+    private void ActivateBorderObject()
+    {
+        Transform parent = transform.parent;
+        while (parent != null)
+        {
+            if (!parent.gameObject.activeSelf) parent.gameObject.SetActive(true);
+            parent = parent.parent;
+        }
+
+        enabled = true;
+        isShowing = true;
+        EnsureBorderUI();
+        gameObject.SetActive(true);
+
+        if (fadeCoroutine != null)
+        {
+            StopCoroutine(fadeCoroutine);
+            fadeCoroutine = null;
+        }
     }
 
     /// <summary>
@@ -128,16 +168,14 @@ public class MinigameSimpleBorder : MonoBehaviour
     {
         if (minigameObj == null) return;
 
-        EnsureBorderUI();
-        gameObject.SetActive(true);
+        ActivateBorderObject();
 
         int profileIdx = FindProfileIndex(minigameObj);
         ApplyProfile(profileIdx);
-
-        if (fadeCoroutine != null)
+        if (borderImage != null)
         {
-            StopCoroutine(fadeCoroutine);
-            fadeCoroutine = null;
+            borderImage.SetVerticesDirty();
+            borderImage.SetMaterialDirty();
         }
 
         if (gameObject.activeInHierarchy)
@@ -151,9 +189,9 @@ public class MinigameSimpleBorder : MonoBehaviour
                 fadeCoroutine = StartCoroutine(FadeRoutine(1f, 0.25f));
             }
         }
-        else
+        else if (canvasGroup != null)
         {
-            if (canvasGroup != null) canvasGroup.alpha = 1f;
+            canvasGroup.alpha = 1f;
         }
     }
 
@@ -162,12 +200,12 @@ public class MinigameSimpleBorder : MonoBehaviour
     /// </summary>
     public void PlayBlinkPreview()
     {
-        EnsureBorderUI();
-        gameObject.SetActive(true);
-        if (fadeCoroutine != null)
+        ActivateBorderObject();
+        UpdateShaderProperties();
+        if (borderImage != null)
         {
-            StopCoroutine(fadeCoroutine);
-            fadeCoroutine = null;
+            borderImage.SetVerticesDirty();
+            borderImage.SetMaterialDirty();
         }
         if (gameObject.activeInHierarchy)
         {
@@ -180,6 +218,7 @@ public class MinigameSimpleBorder : MonoBehaviour
     /// </summary>
     public void HideBorder()
     {
+        isShowing = false;
         if (fadeCoroutine != null)
         {
             StopCoroutine(fadeCoroutine);
@@ -196,8 +235,8 @@ public class MinigameSimpleBorder : MonoBehaviour
         fadeCoroutine = StartCoroutine(FadeRoutine(0f, 0.25f, () =>
         {
             activeProfileIndex = -1;
-            gameObject.SetActive(false);
             fadeCoroutine = null;
+            gameObject.SetActive(false);
         }));
     }
 
@@ -225,6 +264,7 @@ public class MinigameSimpleBorder : MonoBehaviour
         {
             yield return new WaitForSecondsRealtime(startDelay);
         }
+        UpdateShaderProperties();
 
         for (int i = 0; i < blinkCount; i++)
         {
@@ -266,8 +306,9 @@ public class MinigameSimpleBorder : MonoBehaviour
         // จบการทำงานและซ่อน GameObject อย่างนุ่มนวล
         canvasGroup.alpha = 0f;
         activeProfileIndex = -1;
-        gameObject.SetActive(false);
+        isShowing = false;
         fadeCoroutine = null;
+        gameObject.SetActive(false);
     }
 
     public void ApplyProfile(int index)
@@ -291,6 +332,11 @@ public class MinigameSimpleBorder : MonoBehaviour
         rootRect.sizeDelta = size;
 
         UpdateShaderProperties();
+        if (borderImage != null)
+        {
+            borderImage.SetVerticesDirty();
+            borderImage.SetMaterialDirty();
+        }
     }
 
     public void SetBorderColor(Color col)
@@ -379,6 +425,7 @@ public class MinigameSimpleBorder : MonoBehaviour
         }
 
         canvasGroup.alpha = targetAlpha;
+        fadeCoroutine = null;
         onComplete?.Invoke();
     }
 
@@ -405,9 +452,10 @@ public class MinigameSimpleBorder : MonoBehaviour
         {
             canvasGroup = GetComponent<CanvasGroup>();
             if (canvasGroup == null) canvasGroup = gameObject.AddComponent<CanvasGroup>();
-            canvasGroup.blocksRaycasts = false;
-            canvasGroup.interactable = false;
         }
+        canvasGroup.enabled = true;
+        canvasGroup.blocksRaycasts = false;
+        canvasGroup.interactable = false;
 
         // ลบ GameObject ขอบ 4 ด้านเก่าออก (ถ้ามี)
         string[] oldLines = new string[] { "Border_Top", "Border_Bottom", "Border_Left", "Border_Right" };
@@ -439,6 +487,7 @@ public class MinigameSimpleBorder : MonoBehaviour
             if (borderImage == null) borderImage = gameObject.AddComponent<Image>();
         }
 
+        borderImage.enabled = true;
         borderImage.raycastTarget = false;
         if (borderMaterial != null && borderImage.material != borderMaterial)
         {

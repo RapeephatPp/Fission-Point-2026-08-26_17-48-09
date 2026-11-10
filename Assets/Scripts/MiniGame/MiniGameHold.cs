@@ -293,6 +293,11 @@ public class MiniGameHold : MonoBehaviour
         timer -= Time.deltaTime;
         if (timerText != null) timerText.text = Mathf.Ceil(timer).ToString() + "";
 
+        if (Input.GetKeyDown(KeyCode.Space) || Input.GetMouseButtonDown(0))
+        {
+            if (AudioManager.Instance != null) AudioManager.Instance.PlaySFX("tileClick");
+        }
+
         if (Input.GetKey(KeyCode.Space) || Input.GetMouseButton(0))
         {
             currentGauge += gaugeUpSpeed * Time.deltaTime;
